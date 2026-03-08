@@ -1,0 +1,17 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - ../../base
+labels:
+  - includeSelectors: false
+    pairs:
+      app.kubernetes.io/environment: dev
+patches:
+  - target:
+      kind: ConfigMap
+      name: foculist-runtime
+    path: patch-runtime-configmap.yaml
+  - target:
+      kind: Ingress
+      name: gateway-bff
+    path: patch-ingress.yaml

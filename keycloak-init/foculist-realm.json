@@ -1,0 +1,65 @@
+{
+  "realm": "foculist",
+  "enabled": true,
+  "displayName": "Foculist Development Identity Provider",
+  "loginTheme": "keycloak",
+  "accessTokenLifespan": 900,
+  "ssoSessionIdleTimeout": 1800,
+  "ssoSessionMaxLifespan": 36000,
+  "users": [
+    {
+      "username": "devuser@foculist.com",
+      "email": "devuser@foculist.com",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "Dev",
+      "lastName": "User",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "password"
+        }
+      ],
+      "realmRoles": ["user"]
+    }
+  ],
+  "roles": {
+    "realm": [
+      {
+        "name": "user",
+        "description": "Standard User Role"
+      },
+      {
+        "name": "admin",
+        "description": "Administrator Role"
+      }
+    ]
+  },
+  "clients": [
+    {
+      "clientId": "foculist-local-client",
+      "enabled": true,
+      "clientAuthenticatorType": "client-secret",
+      "secret": "foculist-dev-secret-that-is-long",
+      "redirectUris": [
+        "http://localhost:3000/*",
+        "http://localhost:8080/*"
+      ],
+      "webOrigins": [
+        "+"
+      ],
+      "publicClient": false,
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": true,
+      "serviceAccountsEnabled": true,
+      "authorizationServicesEnabled": true,
+      "defaultClientScopes": [
+        "web-origins",
+        "profile",
+        "roles",
+        "email"
+      ]
+    }
+  ]
+}

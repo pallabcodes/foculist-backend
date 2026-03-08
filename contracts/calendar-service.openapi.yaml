@@ -1,0 +1,117 @@
+openapi: 3.1.0
+info:
+  title: foculist calendar-service API
+  version: 0.1.0
+components:
+  parameters:
+    tenantHeader:
+      in: header
+      name: X-Tenant-ID
+      required: true
+      schema:
+        type: string
+      description: Tenant identifier for request isolation
+  schemas:
+    CalendarEvent:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        date:
+          type: string
+          format: date
+        time:
+          type: string
+        tenantId:
+          type: string
+      required: [id, title, date, time, tenantId]
+    CreateCalendarEventRequest:
+      type: object
+      properties:
+        title:
+          type: string
+        date:
+          type: string
+          format: date
+        time:
+          type: string
+      required: [title, date, time]
+    AgendaContext:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        meetingId:
+          type: string
+        title:
+          type: string
+        startTime:
+          type: string
+          nullable: true
+        tenantId:
+          type: string
+      required: [id, meetingId, title, tenantId]
+    UpsertAgendaContextRequest:
+      type: object
+      properties:
+        meetingId:
+          type: string
+        title:
+          type: string
+        startTime:
+          type: string
+      required: [meetingId, title]
+paths:
+  /v1/calendar/events:
+    get:
+      summary: List events
+      parameters:
+        - $ref: '#/components/parameters/tenantHeader'
+      responses:
+        "200":
+          description: Events list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CalendarEvent'
+    post:
+      summary: Create event
+      parameters:
+        - $ref: '#/components/parameters/tenantHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateCalendarEventRequest'
+      responses:
+        "201":
+          description: Event created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CalendarEvent'
+  /v1/calendar/agenda-context:
+    post:
+      summary: Set agenda context
+      parameters:
+        - $ref: '#/components/parameters/tenantHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpsertAgendaContextRequest'
+      responses:
+        "200":
+          description: Context persisted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AgendaContext'

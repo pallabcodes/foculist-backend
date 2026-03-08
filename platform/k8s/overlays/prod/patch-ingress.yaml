@@ -1,0 +1,11 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: gateway-bff
+spec:
+  tls:
+    - hosts:
+        - api.foculist.com
+      secretName: foculist-gateway-tls
+  rules:
+    - host: api.foculist.com

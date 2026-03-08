@@ -1,0 +1,141 @@
+openapi: 3.1.0
+info:
+  title: foculist sync-service API
+  version: 0.1.0
+components:
+  parameters:
+    tenantHeader:
+      in: header
+      name: X-Tenant-ID
+      required: true
+      schema:
+        type: string
+      description: Tenant identifier for request isolation
+  schemas:
+    SyncPushRequest:
+      type: object
+      properties:
+        deviceId:
+          type: string
+        pendingChanges:
+          type: integer
+          minimum: 0
+        payloadVersion:
+          type: string
+          nullable: true
+        payload:
+          type: object
+          additionalProperties: true
+        clientSyncTime:
+          type: string
+          format: date-time
+          nullable: true
+      required: [deviceId, pendingChanges]
+    SyncPushResponse:
+      type: object
+      properties:
+        accepted:
+          type: boolean
+        envelopeId:
+          type: string
+          format: uuid
+        deviceId:
+          type: string
+        pendingChanges:
+          type: integer
+        receivedAt:
+          type: string
+          format: date-time
+        tenantId:
+          type: string
+      required: [accepted, envelopeId, deviceId, pendingChanges, receivedAt, tenantId]
+    SyncPullRequest:
+      type: object
+      properties:
+        deviceId:
+          type: string
+        lastSync:
+          type: string
+          format: date-time
+          nullable: true
+      required: [deviceId]
+    SyncChange:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        type:
+          type: string
+          enum: [BATCH, ENTITY]
+        deviceId:
+          type: string
+        payload:
+          type: string
+        eventTime:
+          type: string
+          format: date-time
+      required: [id, type, deviceId, payload, eventTime]
+    SyncPullResponse:
+      type: object
+      properties:
+        lastSync:
+          type: string
+          format: date-time
+          nullable: true
+        changes:
+          type: array
+          items:
+            $ref: '#/components/schemas/SyncChange'
+        changeCount:
+          type: integer
+        serverTime:
+          type: string
+          format: date-time
+        nextSyncCursor:
+          type: string
+          format: date-time
+        tenantId:
+          type: string
+      required: [changes, changeCount, serverTime, nextSyncCursor, tenantId]
+paths:
+  /v1/sync/push:
+    post:
+      summary: Push tenant-local changes to sync ledger
+      parameters:
+        - $ref: '#/components/parameters/tenantHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SyncPushRequest'
+      responses:
+        "200":
+          description: Push accepted and persisted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SyncPushResponse'
+        "400":
+          description: Invalid sync payload
+  /v1/sync/pull:
+    post:
+      summary: Pull tenant-scoped change events since last cursor
+      parameters:
+        - $ref: '#/components/parameters/tenantHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SyncPullRequest'
+      responses:
+        "200":
+          description: Changes returned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SyncPullResponse'
+        "400":
+          description: Invalid sync cursor

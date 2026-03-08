@@ -1,0 +1,20 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - namespace.yaml
+  - runtime-configmap.yaml
+  - resourcequota.yaml
+  - networkpolicy-default-deny.yaml
+  - gateway-bff-ingress.yaml
+  - services/identity-service.yaml
+  - services/project-service.yaml
+  - services/planning-service.yaml
+  - services/calendar-service.yaml
+  - services/meeting-service.yaml
+  - services/sync-service.yaml
+  - services/resource-service.yaml
+  - services/gateway-bff.yaml
+labels:
+  - includeSelectors: false
+    pairs:
+      app.kubernetes.io/part-of: foculist

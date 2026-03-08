@@ -1,0 +1,195 @@
+openapi: 3.1.0
+info:
+  title: foculist identity-service API
+  version: 0.1.0
+paths:
+  /v1/auth/login:
+    post:
+      summary: Login with credentials
+      parameters:
+        - $ref: "#/components/parameters/tenantHeader"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email: { type: string, format: email }
+                password: { type: string }
+              required: [email, password]
+      responses:
+        "200":
+          description: Auth tokens returned
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthTokenResponse"
+  /v1/auth/register:
+    post:
+      summary: Register user
+      parameters:
+        - $ref: "#/components/parameters/tenantHeader"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name: { type: string }
+                email: { type: string, format: email }
+                password: { type: string }
+              required: [name, email, password]
+      responses:
+        "201":
+          description: User registered
+  /v1/orgs:
+    post:
+      summary: Create a new organization (Tenant)
+      parameters:
+        - $ref: "#/components/parameters/tenantHeader"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateOrganizationRequest"
+      responses:
+        "201":
+          description: Organization created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Organization"
+    get:
+      summary: List organizations for the current user
+      parameters:
+        - $ref: "#/components/parameters/tenantHeader"
+      responses:
+        "200":
+          description: List of organizations
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Organization"
+  /v1/orgs/{orgId}/members:
+    post:
+      summary: Invite or add a member to an organization
+      parameters:
+        - $ref: "#/components/parameters/tenantHeader"
+        - in: path
+          name: orgId
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email: { type: string, format: email }
+                role: { type: string, enum: [OWNER, ADMIN, MEMBER, GUEST] }
+              required: [email, role]
+      responses:
+        "201":
+          description: Member added
+    get:
+      summary: List members of an organization
+      parameters:
+        - $ref: "#/components/parameters/tenantHeader"
+        - in: path
+          name: orgId
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: List of members
+  /v1/users/{id}:
+    get:
+      summary: Get user profile
+      parameters:
+        - $ref: "#/components/parameters/tenantHeader"
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: User details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+  /v1/user:
+    get:
+      summary: Compatibility user profile endpoint for next-boilerplate
+      parameters:
+        - $ref: "#/components/parameters/tenantHeader"
+      responses:
+        "200":
+          description: Current user details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+    post:
+      summary: Compatibility user create endpoint for next-boilerplate
+      parameters:
+        - $ref: "#/components/parameters/tenantHeader"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name: { type: string }
+                email: { type: string, format: email }
+                password: { type: string }
+              required: [name, email]
+      responses:
+        "201":
+          description: User created
+
+components:
+  parameters:
+    tenantHeader:
+      in: header
+      name: X-Tenant-ID
+      required: true
+      schema:
+        type: string
+      description: Tenant identifier for request isolation
+  schemas:
+    AuthTokenResponse:
+      type: object
+      properties:
+        accessToken: { type: string }
+        refreshToken: { type: string }
+        userId: { type: string }
+        tenantId: { type: string }
+    CreateOrganizationRequest:
+      type: object
+      properties:
+        name: { type: string }
+        slug: { type: string }
+      required: [name, slug]
+    Organization:
+      type: object
+      properties:
+        id: { type: string }
+        name: { type: string }
+        slug: { type: string }
+        tier: { type: string, enum: [SOLO, STARTUP, ENTERPRISE] }
+    User:
+      type: object
+      properties:
+        id: { type: string }
+        name: { type: string }
+        email: { type: string }
+        role: { type: string }

@@ -1,0 +1,83 @@
+spring:
+  application:
+    name: planning-service
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/foculist}
+    username: ${DB_USERNAME:foculist}
+    password: ${DB_PASSWORD:foculist}
+  jpa:
+    hibernate:
+      ddl-auto: validate
+  flyway:
+    enabled: true
+  data:
+    mongodb:
+      uri: ${MONGODB_URI:mongodb://localhost:27017/foculist_planning-service}
+  redis:
+    host: ${REDIS_HOST:localhost}
+    port: ${REDIS_PORT:6379}
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+  rabbitmq:
+    host: ${RABBITMQ_HOST:localhost}
+    port: ${RABBITMQ_PORT:5672}
+
+management:
+  endpoint:
+    health:
+      probes:
+        enabled: true
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus
+  metrics:
+    tags:
+      application: ${spring.application.name}
+  tracing:
+    sampling:
+      probability: ${TRACING_SAMPLING_PROBABILITY:1.0}
+  otlp:
+    tracing:
+      endpoint: ${OTEL_EXPORTER_OTLP_ENDPOINT:http://localhost:4318/v1/traces}
+
+logging:
+  pattern:
+    level: "%5p [${spring.application.name},%X{traceId:-},%X{spanId:-},%X{tenantId:-}]"
+
+app:
+  persistence:
+    mode: jpa
+  messaging:
+    mode: kafka
+  cache:
+    enabled: true
+  outbox:
+    polling-enabled: false
+    poll-interval-ms: 5000
+    batch-size: 100
+    max-attempts: 10
+    task-created-topic: planning.task.created.v1
+  aws:
+    region: ${AWS_REGION:us-east-1}
+    endpoint: ${AWS_ENDPOINT:http://localhost:4566}
+  security:
+    jwt:
+      secret: ${JWT_SECRET:Zm9jdWxpc3QtZGV2LWp3dC1zZWNyZXQta2VlcC1jaGFuZ2U=}
+  tenancy:
+    default-tenant: public
+    header: X-Tenant-ID
+    parameter: tenant
+    path-pattern: ^/v1/tenants/([^/]+)/.*
+    subdomain-pattern: ^([^.]+)\\..*
+    required: true
+    allow-jwt-claim: true
+    jwt-claim: tenant
+    enforce-jwt-match: true
+    skip-actuator: true
+
+server:
+  port: 8083

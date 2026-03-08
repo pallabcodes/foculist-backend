@@ -1,0 +1,125 @@
+openapi: 3.1.0
+info:
+  title: foculist planning-service API
+  version: 0.1.0
+components:
+  parameters:
+    tenantHeader:
+      in: header
+      name: X-Tenant-ID
+      required: true
+      schema:
+        type: string
+      description: Tenant identifier for request isolation
+  schemas:
+    Sprint:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        status:
+          type: string
+          enum: [PLANNED, ACTIVE, CLOSED]
+        startDate:
+          type: string
+          format: date-time
+        endDate:
+          type: string
+          format: date-time
+        tenantId:
+          type: string
+      required: [id, name, status, startDate, endDate, tenantId]
+    CreateTaskRequest:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        status:
+          type: string
+          enum: [TODO, IN_PROGRESS, REVIEW, TESTING, DONE]
+        priority:
+          type: string
+          enum: [LOW, MEDIUM, HIGH, CRITICAL]
+        sprintId:
+          type: string
+          format: uuid
+      required: [title]
+    Task:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        sprintId:
+          type: string
+          format: uuid
+          nullable: true
+        title:
+          type: string
+        description:
+          type: string
+          nullable: true
+        status:
+          type: string
+          enum: [TODO, IN_PROGRESS, REVIEW, TESTING, DONE]
+        priority:
+          type: string
+          enum: [LOW, MEDIUM, HIGH, CRITICAL]
+        createdAt:
+          type: string
+          format: date-time
+        tenantId:
+          type: string
+      required: [id, title, status, priority, createdAt, tenantId]
+paths:
+  /v1/sprints:
+    get:
+      summary: List sprints
+      parameters:
+        - $ref: '#/components/parameters/tenantHeader'
+      responses:
+        "200":
+          description: Sprint list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Sprint'
+  /v1/tasks:
+    post:
+      summary: Create task
+      parameters:
+        - $ref: '#/components/parameters/tenantHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTaskRequest'
+      responses:
+        "201":
+          description: Task created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+  /v1/workflow/statuses:
+    get:
+      summary: List workflow statuses
+      parameters:
+        - $ref: '#/components/parameters/tenantHeader'
+      responses:
+        "200":
+          description: Workflow statuses
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string

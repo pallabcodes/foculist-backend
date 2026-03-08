@@ -1,0 +1,117 @@
+openapi: 3.1.0
+info:
+  title: foculist meeting-service API
+  version: 0.1.0
+components:
+  parameters:
+    tenantHeader:
+      in: header
+      name: X-Tenant-ID
+      required: true
+      schema:
+        type: string
+      description: Tenant identifier for request isolation
+  schemas:
+    MeetingSummary:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        meetingId:
+          type: string
+        content:
+          type: string
+        style:
+          type: string
+          enum: [CONCISE, DETAILED, ACTION_FOCUSED]
+        tenantId:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+      required: [id, meetingId, content, style, tenantId, createdAt]
+    CreateMeetingSummaryRequest:
+      type: object
+      properties:
+        meetingId:
+          type: string
+        content:
+          type: string
+        style:
+          type: string
+          enum: [CONCISE, DETAILED, ACTION_FOCUSED]
+      required: [meetingId, content]
+    ExtractTasksRequest:
+      type: object
+      properties:
+        meetingId:
+          type: string
+        transcript:
+          type: string
+      required: [meetingId, transcript]
+    ExtractedTask:
+      type: object
+      properties:
+        title:
+          type: string
+        priority:
+          type: string
+          enum: [LOW, MEDIUM, HIGH, CRITICAL]
+        sourceMeetingId:
+          type: string
+        tenantId:
+          type: string
+      required: [title, priority, sourceMeetingId, tenantId]
+paths:
+  /v1/meetings/summaries:
+    get:
+      summary: List meeting summaries
+      parameters:
+        - $ref: '#/components/parameters/tenantHeader'
+      responses:
+        "200":
+          description: Summaries list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MeetingSummary'
+    post:
+      summary: Save meeting summary
+      parameters:
+        - $ref: '#/components/parameters/tenantHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateMeetingSummaryRequest'
+      responses:
+        "201":
+          description: Summary saved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MeetingSummary'
+  /v1/meetings/extract-tasks:
+    post:
+      summary: Extract tasks from transcript
+      parameters:
+        - $ref: '#/components/parameters/tenantHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExtractTasksRequest'
+      responses:
+        "200":
+          description: Tasks extracted
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ExtractedTask'

@@ -1,0 +1,160 @@
+openapi: 3.1.0
+info:
+  title: foculist resource-service API
+  version: 0.1.0
+components:
+  parameters:
+    tenantHeader:
+      in: header
+      name: X-Tenant-ID
+      required: true
+      schema:
+        type: string
+      description: Tenant identifier for request isolation
+  schemas:
+    Bookmark:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        url:
+          type: string
+          format: uri
+        tenantId:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+      required: [id, title, url, tenantId, createdAt]
+    CreateBookmarkRequest:
+      type: object
+      properties:
+        title:
+          type: string
+        url:
+          type: string
+          format: uri
+      required: [title, url]
+    WorklogEntry:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        project:
+          type: string
+        task:
+          type: string
+        durationMinutes:
+          type: integer
+        tenantId:
+          type: string
+        loggedAt:
+          type: string
+          format: date-time
+      required: [id, project, task, durationMinutes, tenantId, loggedAt]
+    CreateWorklogRequest:
+      type: object
+      properties:
+        project:
+          type: string
+        task:
+          type: string
+        durationMinutes:
+          type: integer
+      required: [project, task, durationMinutes]
+    VaultItem:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        classification:
+          type: string
+        tenantId:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+      required: [id, name, classification, tenantId, createdAt]
+    CreateVaultItemRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        classification:
+          type: string
+      required: [name]
+paths:
+  /v1/bookmarks:
+    get:
+      summary: List bookmarks
+      parameters:
+        - $ref: '#/components/parameters/tenantHeader'
+      responses:
+        "200":
+          description: Bookmarks list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Bookmark'
+    post:
+      summary: Create bookmark
+      parameters:
+        - $ref: '#/components/parameters/tenantHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateBookmarkRequest'
+      responses:
+        "201":
+          description: Bookmark created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Bookmark'
+  /v1/worklog/entries:
+    post:
+      summary: Create worklog entry
+      parameters:
+        - $ref: '#/components/parameters/tenantHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateWorklogRequest'
+      responses:
+        "201":
+          description: Worklog entry created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorklogEntry'
+  /v1/vault/items:
+    post:
+      summary: Create vault item metadata
+      parameters:
+        - $ref: '#/components/parameters/tenantHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateVaultItemRequest'
+      responses:
+        "201":
+          description: Vault item created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VaultItem'

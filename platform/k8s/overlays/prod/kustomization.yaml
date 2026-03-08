@@ -1,0 +1,34 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - ../../base
+labels:
+  - includeSelectors: false
+    pairs:
+      app.kubernetes.io/environment: prod
+patches:
+  - target:
+      kind: ConfigMap
+      name: foculist-runtime
+    path: patch-runtime-configmap.yaml
+  - target:
+      kind: Ingress
+      name: gateway-bff
+    path: patch-ingress.yaml
+replicas:
+  - name: identity-service
+    count: 3
+  - name: project-service
+    count: 3
+  - name: planning-service
+    count: 3
+  - name: calendar-service
+    count: 3
+  - name: meeting-service
+    count: 3
+  - name: sync-service
+    count: 3
+  - name: resource-service
+    count: 3
+  - name: gateway-bff
+    count: 4

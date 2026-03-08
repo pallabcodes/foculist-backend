@@ -1,0 +1,106 @@
+openapi: 3.1.0
+info:
+  title: foculist gateway-bff API
+  version: 0.1.0
+components:
+  parameters:
+    tenantHeader:
+      in: header
+      name: X-Tenant-ID
+      required: true
+      schema:
+        type: string
+      description: Tenant identifier for request isolation
+  schemas:
+    DashboardPayload:
+      type: object
+      properties:
+        tenantId:
+          type: string
+        projects:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+        sprints:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+        bookmarks:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+        generatedAt:
+          type: string
+          format: date-time
+      required: [tenantId, projects, sprints, bookmarks, generatedAt]
+paths:
+  /api/user:
+    get:
+      summary: Compatibility endpoint for frontend user profile
+      parameters:
+        - $ref: '#/components/parameters/tenantHeader'
+      responses:
+        "200":
+          description: User profile
+    post:
+      summary: Compatibility endpoint for frontend user creation
+      parameters:
+        - $ref: '#/components/parameters/tenantHeader'
+      responses:
+        "201":
+          description: User created
+  /bff/dashboard:
+    get:
+      summary: Aggregated dashboard view for frontend
+      parameters:
+        - $ref: '#/components/parameters/tenantHeader'
+      responses:
+        "200":
+          description: Dashboard payload
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DashboardPayload'
+  /api/planning/sprints:
+    get:
+      summary: Gateway route to planning-service sprints endpoint
+      parameters:
+        - $ref: '#/components/parameters/tenantHeader'
+      responses:
+        "200":
+          description: Proxied planning response
+  /api/calendar/events:
+    get:
+      summary: Gateway route to calendar-service events endpoint
+      parameters:
+        - $ref: '#/components/parameters/tenantHeader'
+      responses:
+        "200":
+          description: Proxied calendar response
+  /api/sync/push:
+    post:
+      summary: Gateway route to sync-service push endpoint
+      parameters:
+        - $ref: '#/components/parameters/tenantHeader'
+      responses:
+        "200":
+          description: Proxied sync push response
+  /api/sync/pull:
+    post:
+      summary: Gateway route to sync-service pull endpoint
+      parameters:
+        - $ref: '#/components/parameters/tenantHeader'
+      responses:
+        "200":
+          description: Proxied sync pull response
+  /api/resources/bookmarks:
+    get:
+      summary: Gateway route to resource-service bookmarks endpoint
+      parameters:
+        - $ref: '#/components/parameters/tenantHeader'
+      responses:
+        "200":
+          description: Proxied resource response

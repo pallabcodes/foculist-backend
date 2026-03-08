@@ -1,0 +1,48 @@
+# --- IDE and Editor Files ---
+.idea/
+.vscode/
+*.iml
+*.iws
+*.ipr
+out/
+.classpath
+.project
+.settings/
+.factorypath
+*.swp
+*.bak
+*~
+
+# --- OS Specific ---
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# --- Build and Artifacts ---
+.gradle/
+**/build/
+**/bin/
+**/target/
+build/
+bin/
+
+# --- Go Specific ---
+# binaries
+services/automation-worker-go/automation-worker
+# vendor (if preferred)
+# services/automation-worker-go/vendor/
+
+# --- Environment and Secrets ---
+.env
+.env.local
+*.env
+platform/k8s/base/runtime-secret.yaml
+
+# --- Logs ---
+*.log
+logs/
+
+# --- Database / Local Dev State ---
+localstack-init/state/
+keycloak-init/export/
+data/
