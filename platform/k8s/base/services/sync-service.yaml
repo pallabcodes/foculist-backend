@@ -13,6 +13,13 @@ spec:
       labels:
         app: sync-service
     spec:
+      initContainers:
+        - name: otel-javaagent
+          image: ghcr.io/open-telemetry/opentelemetry-operator/autoinstrumentation-java:1.33.6
+          command: ["cp", "/javaagent.jar", "/otel/opentelemetry-javaagent.jar"]
+          volumeMounts:
+            - name: otel-javaagent
+              mountPath: /otel
       containers:
         - name: app
           image: yourorg/sync-service:latest
@@ -26,6 +33,9 @@ spec:
                 name: foculist-runtime
             - secretRef:
                 name: foculist-runtime
+          volumeMounts:
+            - name: otel-javaagent
+              mountPath: /otel
           livenessProbe:
             httpGet:
               path: /actuator/health/liveness
@@ -38,6 +48,9 @@ spec:
               port: 8086
             initialDelaySeconds: 10
             periodSeconds: 10
+      volumes:
+        - name: otel-javaagent
+          emptyDir: {}
 ---
 apiVersion: v1
 kind: Service

@@ -1,21 +1,21 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: gateway-bff
+  name: gateway-bff-canary
   namespace: foculist
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
-      app: gateway-bff
+      app: gateway-bff-canary
   template:
     metadata:
       labels:
-        app: gateway-bff
+        app: gateway-bff-canary
     spec:
       containers:
         - name: app
-          image: yourorg/gateway-bff:latest
+          image: yourorg/gateway-bff:canary
           ports:
             - containerPort: 8080
           env:
@@ -40,33 +40,15 @@ spec:
                 name: foculist-runtime
             - secretRef:
                 name: foculist-runtime
-          volumeMounts:
-            - name: otel-javaagent
-              mountPath: /otel
-          livenessProbe:
-            httpGet:
-              path: /actuator/health/liveness
-              port: 8080
-            initialDelaySeconds: 20
-            periodSeconds: 10
-          readinessProbe:
-            httpGet:
-              path: /actuator/health/readiness
-              port: 8080
-            initialDelaySeconds: 10
-            periodSeconds: 10
-      volumes:
-        - name: otel-javaagent
-          emptyDir: {}
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: gateway-bff
+  name: gateway-bff-canary
   namespace: foculist
 spec:
   selector:
-    app: gateway-bff
+    app: gateway-bff-canary
   ports:
     - protocol: TCP
       port: 80
