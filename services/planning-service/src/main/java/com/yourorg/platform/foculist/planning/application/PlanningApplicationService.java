@@ -2,89 +2,59 @@ package com.yourorg.platform.foculist.planning.application;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.yourorg.platform.foculist.planning.domain.event.TaskCreatedEvent;
+import com.yourorg.platform.foculist.planning.domain.event.TaskDeletedEvent;
+import com.yourorg.platform.foculist.planning.domain.event.TaskEvent;
+import com.yourorg.platform.foculist.planning.domain.event.TaskStatusChangedEvent;
+import com.yourorg.platform.foculist.planning.domain.event.TaskUpdatedEvent;
+import com.yourorg.platform.foculist.planning.domain.model.Cursor;
+import com.yourorg.platform.foculist.planning.domain.model.EventStore;
 import com.yourorg.platform.foculist.planning.domain.model.OutboxEvent;
+import com.yourorg.platform.foculist.planning.domain.model.OutboxEventStatus;
 import com.yourorg.platform.foculist.planning.domain.model.PlanningDomainException;
 import com.yourorg.platform.foculist.planning.domain.model.Sprint;
+import com.yourorg.platform.foculist.planning.domain.model.SprintStatus;
 import com.yourorg.platform.foculist.planning.domain.model.Task;
 import com.yourorg.platform.foculist.planning.domain.model.TaskPriority;
+import com.yourorg.platform.foculist.planning.domain.model.TaskSnapshotJob;
 import com.yourorg.platform.foculist.planning.domain.model.TaskStatus;
+import com.yourorg.platform.foculist.planning.domain.port.EventStoreRepositoryPort;
 import com.yourorg.platform.foculist.planning.domain.port.OutboxEventRepositoryPort;
 import com.yourorg.platform.foculist.planning.domain.port.SprintRepositoryPort;
 import com.yourorg.platform.foculist.planning.domain.port.TaskRepositoryPort;
-import com.yourorg.platform.foculist.planning.domain.model.EventStore;
-import com.yourorg.platform.foculist.planning.domain.port.EventStoreRepositoryPort;
-import com.yourorg.platform.foculist.planning.domain.event.TaskEvent;
-import com.yourorg.platform.foculist.planning.domain.event.TaskCreatedEvent;
-import com.yourorg.platform.foculist.planning.domain.event.TaskUpdatedEvent;
-import com.yourorg.platform.foculist.planning.domain.event.TaskStatusChangedEvent;
+import com.yourorg.platform.foculist.planning.domain.port.TaskSnapshotJobRepositoryPort;
 import java.time.Clock;
 import java.time.Instant;
 import java.util.Arrays;
-import java.util.LinkedHashMap;
+import java.util.Base64;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
+@RequiredArgsConstructor
 public class PlanningApplicationService {
-    public static final String TASK_CREATED_EVENT_TYPE = "planning.task.created.v1";
-    private final SprintRepositoryPort sprintRepository;
+    public static final String TASK_AGGREGATE_TYPE = "Task";
+    public static final String TASK_CREATED_EVENT_TYPE = "TaskCreated";
+    public static final String TASK_UPDATED_EVENT_TYPE = "TaskUpdated";
+    public static final String TASK_STATUS_CHANGED_EVENT_TYPE = "TaskStatusChanged";
+    public static final String TASK_DELETED_EVENT_TYPE = "TaskDeleted";
+
     private final TaskRepositoryPort taskRepository;
-    private final OutboxEventRepositoryPort outboxEventRepository;
+    private final SprintRepositoryPort sprintRepository;
     private final EventStoreRepositoryPort eventStoreRepository;
+    private final OutboxEventRepositoryPort outboxEventRepository;
+    private final TaskSnapshotJobRepositoryPort snapshotJobRepository;
     private final ObjectMapper objectMapper;
     private final Clock clock;
 
-    public PlanningApplicationService(
-            SprintRepositoryPort sprintRepository,
-            TaskRepositoryPort taskRepository,
-            OutboxEventRepositoryPort outboxEventRepository,
-            EventStoreRepositoryPort eventStoreRepository,
-            ObjectMapper objectMapper
-    ) {
-        this(sprintRepository, taskRepository, outboxEventRepository, eventStoreRepository, objectMapper, Clock.systemUTC());
-    }
-
-    PlanningApplicationService(
-            SprintRepositoryPort sprintRepository,
-            TaskRepositoryPort taskRepository,
-            OutboxEventRepositoryPort outboxEventRepository,
-            EventStoreRepositoryPort eventStoreRepository,
-            ObjectMapper objectMapper,
-            Clock clock
-    ) {
-        this.sprintRepository = sprintRepository;
-        this.taskRepository = taskRepository;
-        this.outboxEventRepository = outboxEventRepository;
-        this.eventStoreRepository = eventStoreRepository;
-        this.objectMapper = objectMapper;
-        this.clock = clock;
-    }
-
-    @Transactional(readOnly = true)
-    public List<SprintView> listSprints(String tenantId, int page, int size) {
-        return sprintRepository.findByTenantId(tenantId, page, size).stream()
-                .map(this::toView)
-                .toList();
-    }
-
-    @Transactional(readOnly = true)
-    public List<String> workflowStatuses() {
-        return Arrays.stream(TaskStatus.values()).map(Enum::name).toList();
-    }
-
     @Transactional
     public TaskView createTask(String tenantId, CreateTaskCommand command) {
-        UUID sprintId = parseSprintId(command.sprintId());
-        if (sprintId != null && sprintRepository.findByIdAndTenantId(sprintId, tenantId).isEmpty()) {
-            throw new PlanningDomainException("Sprint does not exist for tenant: " + sprintId);
-        }
-
         Task task = Task.create(
                 tenantId,
-                sprintId,
+                parseSprintId(command.sprintId()),
                 command.title(),
                 command.description(),
                 TaskStatus.from(command.status()),
@@ -96,7 +66,8 @@ public class PlanningApplicationService {
 
         TaskCreatedEvent domainEvent = new TaskCreatedEvent(
                 saved.id(), saved.tenantId(), saved.sprintId(), saved.title(),
-                saved.description(), saved.status().name(), saved.version(), Instant.now(clock)
+                saved.description(), saved.status().name(), saved.priority().name(),
+                saved.version(), Instant.now(clock)
         );
         saveTaskEvent(domainEvent);
 
@@ -121,9 +92,7 @@ public class PlanningApplicationService {
 
     @Transactional(readOnly = true)
     public List<EventStore> listTaskEvents(String tenantId, UUID taskId) {
-        Task task = taskRepository.findByIdAndTenantId(taskId, tenantId)
-                .orElseThrow(() -> new PlanningDomainException("Task not found"));
-        return eventStoreRepository.findByAggregateId(taskId, "Task");
+        return eventStoreRepository.findByAggregateId(tenantId, taskId, TASK_AGGREGATE_TYPE);
     }
 
     @Transactional
@@ -140,7 +109,8 @@ public class PlanningApplicationService {
         Task saved = taskRepository.save(updated);
 
         TaskUpdatedEvent domainEvent = new TaskUpdatedEvent(
-                saved.id(), saved.tenantId(), saved.title(), saved.description(),
+                saved.id(), saved.tenantId(), saved.sprintId(), saved.title(),
+                saved.description(), saved.priority().name(),
                 saved.version(), Instant.now(clock)
         );
         saveTaskEvent(domainEvent);
@@ -152,12 +122,12 @@ public class PlanningApplicationService {
     public TaskView updateTaskStatus(String tenantId, UUID taskId, String status) {
         Task task = taskRepository.findByIdAndTenantId(taskId, tenantId)
                 .orElseThrow(() -> new PlanningDomainException("Task not found"));
-        TaskStatus oldStatus = task.status();
+        String oldStatus = task.status().name();
         Task updated = task.updateStatus(TaskStatus.from(status), Instant.now(clock));
         Task saved = taskRepository.save(updated);
 
         TaskStatusChangedEvent domainEvent = new TaskStatusChangedEvent(
-                saved.id(), saved.tenantId(), oldStatus.name(), saved.status().name(),
+                saved.id(), saved.tenantId(), oldStatus, saved.status().name(),
                 saved.version(), Instant.now(clock)
         );
         saveTaskEvent(domainEvent);
@@ -170,6 +140,18 @@ public class PlanningApplicationService {
         Task task = taskRepository.findByIdAndTenantId(taskId, tenantId)
                 .orElseThrow(() -> new PlanningDomainException("Task not found"));
         taskRepository.delete(task);
+
+        TaskDeletedEvent domainEvent = new TaskDeletedEvent(
+                task.id(), task.tenantId(), task.version() + 1, Instant.now(clock)
+        );
+        saveTaskEvent(domainEvent);
+    }
+
+    @Transactional(readOnly = true)
+    public List<SprintView> listSprints(String tenantId, int page, int size) {
+        return sprintRepository.findByTenantId(tenantId, page, size).stream()
+                .map(this::toSprintView)
+                .toList();
     }
 
     @Transactional
@@ -178,14 +160,15 @@ public class PlanningApplicationService {
                 UUID.randomUUID(),
                 tenantId,
                 command.name(),
-                com.yourorg.platform.foculist.planning.domain.model.SprintStatus.PLANNED,
-                Instant.parse(command.startDate() + "T00:00:00Z"),
-                Instant.parse(command.endDate() + "T23:59:59Z"),
+                SprintStatus.PLANNED,
+                Instant.parse(command.startDate()),
+                Instant.parse(command.endDate()),
                 Instant.now(clock),
                 Instant.now(clock),
                 0L
         );
-        return toView(sprintRepository.save(sprint));
+        Sprint saved = sprintRepository.save(sprint);
+        return toSprintView(saved);
     }
 
     @Transactional
@@ -194,11 +177,12 @@ public class PlanningApplicationService {
                 .orElseThrow(() -> new PlanningDomainException("Sprint not found"));
         Sprint updated = sprint.update(
                 command.name(),
-                Instant.parse(command.startDate() + "T00:00:00Z"),
-                Instant.parse(command.endDate() + "T23:59:59Z"),
+                Instant.parse(command.startDate()),
+                Instant.parse(command.endDate()),
                 Instant.now(clock)
         );
-        return toView(sprintRepository.save(updated));
+        Sprint saved = sprintRepository.save(updated);
+        return toSprintView(saved);
     }
 
     @Transactional
@@ -208,32 +192,38 @@ public class PlanningApplicationService {
         sprintRepository.delete(sprint);
     }
 
-    private UUID parseSprintId(String rawSprintId) {
-        if (rawSprintId == null || rawSprintId.isBlank()) {
-            return null;
-        }
-        try {
-            return UUID.fromString(rawSprintId.trim());
-        } catch (IllegalArgumentException ex) {
-            throw new PlanningDomainException("Invalid sprintId format");
-        }
+    public List<String> workflowStatuses() {
+        return Arrays.stream(TaskStatus.values()).map(Enum::name).toList();
     }
 
     private void saveTaskEvent(TaskEvent domainEvent) {
         try {
-            String payload = objectMapper.writeValueAsString(domainEvent);
-            String eventType = domainEvent.getClass().getSimpleName();
             EventStore store = new EventStore(
                     UUID.randomUUID(),
                     domainEvent.tenantId(),
                     domainEvent.taskId(),
-                    "Task",
-                    eventType,
-                    payload,
+                    TASK_AGGREGATE_TYPE,
+                    domainEvent.getClass().getSimpleName(),
+                    objectMapper.writeValueAsString(domainEvent),
                     domainEvent.version(),
                     domainEvent.occurredAt()
             );
             eventStoreRepository.save(store);
+
+            // Trigger snapshotting every 10 versions
+            if (domainEvent.version() > 0 && domainEvent.version() % 10 == 0) {
+                snapshotJobRepository.saveIfAbsent(new TaskSnapshotJob(
+                        UUID.randomUUID(),
+                        domainEvent.tenantId(),
+                        domainEvent.taskId(),
+                        domainEvent.version(),
+                        OutboxEventStatus.NEW,
+                        0,
+                        null,
+                        Instant.now(clock),
+                        null
+                ));
+            }
         } catch (JsonProcessingException e) {
             throw new PlanningDomainException("Failed to serialize task event payload");
         }
@@ -241,31 +231,30 @@ public class PlanningApplicationService {
 
     private String createTaskCreatedPayload(Task task) {
         try {
-            Map<String, Object> payload = new LinkedHashMap<>();
-            payload.put("eventType", TASK_CREATED_EVENT_TYPE);
-            payload.put("taskId", task.id().toString());
-            payload.put("tenantId", task.tenantId());
-            payload.put("sprintId", task.sprintId() == null ? null : task.sprintId().toString());
-            payload.put("title", task.title());
-            payload.put("status", task.status().name());
-            payload.put("priority", task.priority().name());
-            payload.put("occurredAt", task.createdAt().toString());
-            return objectMapper.writeValueAsString(payload);
+            return objectMapper.writeValueAsString(task);
         } catch (JsonProcessingException e) {
-            throw new PlanningDomainException("Failed to serialize task created event payload");
+            throw new PlanningDomainException("Failed to serialize task created payload");
         }
     }
 
-    private SprintView toView(Sprint sprint) {
-        return new SprintView(
-                sprint.id(),
-                sprint.name(),
-                sprint.status().name(),
-                sprint.startDate(),
-                sprint.endDate(),
-                sprint.tenantId(),
-                sprint.version()
-        );
+    private UUID parseSprintId(String sprintId) {
+        return (sprintId != null && !sprintId.isBlank()) ? UUID.fromString(sprintId) : null;
+    }
+
+    private Cursor parseCursor(String after) {
+        if (after == null || after.isBlank()) {
+            return new Cursor(Instant.MAX, UUID.randomUUID());
+        }
+        try {
+            String decoded = new String(Base64.getDecoder().decode(after));
+            String[] parts = decoded.split("\\|");
+            if (parts.length != 2) {
+                return new Cursor(Instant.MAX, UUID.randomUUID());
+            }
+            return new Cursor(Instant.parse(parts[0]), UUID.fromString(parts[1]));
+        } catch (Exception e) {
+            return new Cursor(Instant.MAX, UUID.randomUUID());
+        }
     }
 
     private TaskView toView(Task task) {
@@ -282,26 +271,15 @@ public class PlanningApplicationService {
         );
     }
 
-    private Cursor parseCursor(String raw) {
-        if (raw == null || raw.isBlank()) {
-            return Cursor.empty();
-        }
-        String[] parts = raw.split("\\|");
-        if (parts.length != 2) {
-            throw new PlanningDomainException("Invalid cursor format");
-        }
-        try {
-            Instant createdAt = Instant.parse(parts[0]);
-            UUID id = UUID.fromString(parts[1]);
-            return new Cursor(createdAt, id);
-        } catch (Exception ex) {
-            throw new PlanningDomainException("Invalid cursor format");
-        }
-    }
-
-    private record Cursor(Instant createdAt, UUID id) {
-        static Cursor empty() {
-            return new Cursor(null, null);
-        }
+    private SprintView toSprintView(Sprint sprint) {
+        return new SprintView(
+                sprint.id(),
+                sprint.name(),
+                sprint.status().name(),
+                sprint.startDate(),
+                sprint.endDate(),
+                sprint.tenantId(),
+                sprint.version()
+        );
     }
 }

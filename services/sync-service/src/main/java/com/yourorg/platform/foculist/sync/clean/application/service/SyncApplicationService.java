@@ -14,6 +14,7 @@ import com.yourorg.platform.foculist.sync.clean.domain.model.SyncPushEnvelope;
 import com.yourorg.platform.foculist.sync.clean.domain.port.SyncChangeEventRepositoryPort;
 import com.yourorg.platform.foculist.sync.clean.domain.port.SyncDeviceCursorRepositoryPort;
 import com.yourorg.platform.foculist.sync.clean.domain.port.SyncPushEnvelopeRepositoryPort;
+import com.yourorg.platform.foculist.sync.clean.domain.port.SyncRealtimeOpLogRepositoryPort;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.format.DateTimeParseException;
@@ -30,6 +31,7 @@ public class SyncApplicationService {
     private final SyncPushEnvelopeRepositoryPort pushEnvelopeRepository;
     private final SyncChangeEventRepositoryPort changeEventRepository;
     private final SyncDeviceCursorRepositoryPort deviceCursorRepository;
+    private final SyncRealtimeOpLogRepositoryPort realtimeOpLogRepository;
     private final ObjectMapper objectMapper;
     private final Clock clock;
 
@@ -38,12 +40,14 @@ public class SyncApplicationService {
             SyncPushEnvelopeRepositoryPort pushEnvelopeRepository,
             SyncChangeEventRepositoryPort changeEventRepository,
             SyncDeviceCursorRepositoryPort deviceCursorRepository,
+            SyncRealtimeOpLogRepositoryPort realtimeOpLogRepository,
             ObjectMapper objectMapper
     ) {
         this(
                 pushEnvelopeRepository,
                 changeEventRepository,
                 deviceCursorRepository,
+                realtimeOpLogRepository,
                 objectMapper,
                 Clock.systemUTC()
         );
@@ -53,12 +57,14 @@ public class SyncApplicationService {
             SyncPushEnvelopeRepositoryPort pushEnvelopeRepository,
             SyncChangeEventRepositoryPort changeEventRepository,
             SyncDeviceCursorRepositoryPort deviceCursorRepository,
+            SyncRealtimeOpLogRepositoryPort realtimeOpLogRepository,
             ObjectMapper objectMapper,
             Clock clock
     ) {
         this.pushEnvelopeRepository = pushEnvelopeRepository;
         this.changeEventRepository = changeEventRepository;
         this.deviceCursorRepository = deviceCursorRepository;
+        this.realtimeOpLogRepository = realtimeOpLogRepository;
         this.objectMapper = objectMapper;
         this.clock = clock;
     }
@@ -78,6 +84,19 @@ public class SyncApplicationService {
                 clientSync,
                 now
         ));
+
+        // Offload real-time deltas to NoSQL Op-Log for infinite horizontal scale
+        if ("realtime".equalsIgnoreCase(command.payloadVersion()) || command.payload().containsKey("realtime")) {
+            realtimeOpLogRepository.append(com.yourorg.platform.foculist.sync.clean.domain.model.SyncRealtimeOpLogEntry.create(
+                    tenantId,
+                    (String) command.payload().getOrDefault("projectId", "default"),
+                    command.deviceId(),
+                    (String) command.payload().getOrDefault("destination", "broadcast"),
+                    payloadJson,
+                    now,
+                    now.plus(24, java.time.temporal.ChronoUnit.HOURS) // 24-hour TTL for high-frequency deltas
+            ));
+        }
 
         if (savedEnvelope.pendingChanges() > 0) {
             changeEventRepository.save(SyncChangeEvent.batch(

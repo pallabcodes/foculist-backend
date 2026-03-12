@@ -1,6 +1,5 @@
 package com.yourorg.platform.foculist.tenancy;
 
-import jakarta.servlet.http.HttpServletRequest;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.springframework.util.StringUtils;
@@ -14,21 +13,24 @@ public class TenantResolver {
         this.jwtClaimExtractor = jwtClaimExtractor;
     }
 
-    public String resolve(HttpServletRequest request) {
+    /**
+     * Environment-agnostic resolution logic.
+     */
+    public String resolve(String authHeader, String tenantHeader, String tenantParam, String requestUri, String serverName) {
         String jwtTenant = null;
         if (properties.isAllowJwtClaim()) {
             try {
-                jwtTenant = jwtClaimExtractor.extractClaim(request.getHeader("Authorization"), properties.getJwtClaim());
+                jwtTenant = jwtClaimExtractor.extractClaim(authHeader, properties.getJwtClaim());
             } catch (JwtValidationException ex) {
                 throw new TenantResolutionException(401, ex.getMessage());
             }
         }
 
         String tenant = firstNonBlank(
-                request.getHeader(properties.getHeader()),
-                request.getParameter(properties.getParameter()),
-                extractFromPath(request.getRequestURI()),
-                extractFromSubdomain(request.getServerName()),
+                tenantHeader,
+                tenantParam,
+                extractFromPath(requestUri),
+                extractFromSubdomain(serverName),
                 jwtTenant
         );
 
@@ -50,6 +52,7 @@ public class TenantResolver {
     }
 
     private String extractFromPath(String requestUri) {
+        if (requestUri == null) return null;
         Pattern pattern = Pattern.compile(properties.getPathPattern());
         Matcher matcher = pattern.matcher(requestUri);
         return matcher.matches() ? matcher.group(1) : null;

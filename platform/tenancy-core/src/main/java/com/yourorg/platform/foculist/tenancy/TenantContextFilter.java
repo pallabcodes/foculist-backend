@@ -31,7 +31,13 @@ public class TenantContextFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
         try {
-            String tenantId = tenantResolver.resolve(request);
+            String tenantId = tenantResolver.resolve(
+                    request.getHeader("Authorization"),
+                    request.getHeader(properties.getHeader()),
+                    request.getParameter(properties.getParameter()),
+                    request.getRequestURI(),
+                    request.getServerName()
+            );
             TenantContext.set(tenantId);
             MDC.put("tenantId", tenantId);
             response.setHeader(properties.getHeader(), tenantId);

@@ -40,9 +40,26 @@ Backend monorepo for the `foculist` frontend reference (`references/next-boilarp
 - `docs/` architecture decisions and frontend-backend mapping.
 - `.env.example` baseline environment variables for local/dev scaffolding.
 
-## Start local infra
+## Quick Start (Google-Grade Automation)
+To get the entire platform up and running from a fresh clone:
+
 ```bash
-docker compose -f platform/compose/docker-compose.dev.yml up
+# 1. Prepare environment and infrastructure
+./scripts/bootstrap.sh
+
+# 2. Start core services in separate terminals
+./gradlew :services:gateway-bff:bootRun    # Port 8080 (Entrypoint)
+./gradlew :services:identity-service:bootRun # Port 8081
+./gradlew :services:planning-service:bootRun # Port 8083
+```
+
+Detailed Documentation:
+- **Swagger UI**: [http://localhost:8080/swagger-ui.html](http://localhost:8080/swagger-ui.html)
+- **API Version Discovery**: [http://localhost:8080/api/versions](http://localhost:8080/api/versions)
+
+## Start local infra (Manual)
+```bash
+docker compose -f platform/compose/docker-compose.dev.yml up -d
 ```
 
 or:

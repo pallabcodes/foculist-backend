@@ -1,3 +1,4 @@
+# schema_url: https://opentelemetry.io/schemas/1.24.0
 receivers:
   otlp:
     protocols:
@@ -5,12 +6,16 @@ receivers:
       http:
 
 exporters:
+  otlp/jaeger:
+    endpoint: jaeger:4317
+    tls:
+      insecure: true
   prometheus:
     endpoint: "0.0.0.0:9464"
   loki:
     endpoint: "http://loki:3100/loki/api/v1/push"
-  logging:
-    loglevel: info
+  debug:
+    verbosity: basic
 
 service:
   pipelines:
@@ -19,7 +24,7 @@ service:
       exporters: [prometheus]
     logs:
       receivers: [otlp]
-      exporters: [loki, logging]
+      exporters: [loki, debug]
     traces:
       receivers: [otlp]
-      exporters: [logging]
+      exporters: [otlp/jaeger, debug]

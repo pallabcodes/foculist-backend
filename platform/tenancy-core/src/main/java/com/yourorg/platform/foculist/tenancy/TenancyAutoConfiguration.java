@@ -21,8 +21,9 @@ public class TenancyAutoConfiguration {
 
     @Bean
     @ConditionalOnMissingBean
-    public RestTemplate tenancyRestTemplate(RestTemplateBuilder builder) {
-        return builder.build();
+    public RestTemplate tenancyRestTemplate(org.springframework.beans.factory.ObjectProvider<RestTemplateBuilder> builderProvider) {
+        RestTemplateBuilder builder = builderProvider.getIfAvailable();
+        return builder != null ? builder.build() : new RestTemplate();
     }
 
     @Bean
@@ -39,30 +40,34 @@ public class TenancyAutoConfiguration {
         return new TenantResolver(properties, jwtClaimExtractor);
     }
 
-    @Bean
-    FilterRegistrationBean<TenantContextFilter> tenantContextFilter(
-            TenantResolver tenantResolver,
-            TenantContextProperties properties,
-            ObjectMapper objectMapper
-    ) {
-        FilterRegistrationBean<TenantContextFilter> registration = new FilterRegistrationBean<>();
-        registration.setFilter(new TenantContextFilter(tenantResolver, properties, objectMapper));
-        registration.setOrder(Ordered.HIGHEST_PRECEDENCE + 10);
-        return registration;
-    }
+    @org.springframework.context.annotation.Configuration
+    @org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication(type = org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication.Type.SERVLET)
+    public static class TenancyWebMvcConfiguration {
+        @Bean
+        public FilterRegistrationBean<TenantContextFilter> tenantContextFilter(
+                TenantResolver tenantResolver,
+                TenantContextProperties properties,
+                ObjectMapper objectMapper
+        ) {
+            FilterRegistrationBean<TenantContextFilter> registration = new FilterRegistrationBean<>();
+            registration.setFilter(new TenantContextFilter(tenantResolver, properties, objectMapper));
+            registration.setOrder(Ordered.HIGHEST_PRECEDENCE + 10);
+            return registration;
+        }
 
-    @Bean
-    FilterRegistrationBean<com.yourorg.platform.foculist.tenancy.web.RequestIdFilter> requestIdFilter() {
-        FilterRegistrationBean<com.yourorg.platform.foculist.tenancy.web.RequestIdFilter> registration = new FilterRegistrationBean<>();
-        registration.setFilter(new com.yourorg.platform.foculist.tenancy.web.RequestIdFilter());
-        registration.setOrder(Ordered.HIGHEST_PRECEDENCE);
-        return registration;
-    }
+        @Bean
+        public FilterRegistrationBean<com.yourorg.platform.foculist.tenancy.web.RequestIdFilter> requestIdFilter() {
+            FilterRegistrationBean<com.yourorg.platform.foculist.tenancy.web.RequestIdFilter> registration = new FilterRegistrationBean<>();
+            registration.setFilter(new com.yourorg.platform.foculist.tenancy.web.RequestIdFilter());
+            registration.setOrder(Ordered.HIGHEST_PRECEDENCE);
+            return registration;
+        }
 
-    @Bean
-    MethodSecurityExpressionHandler methodSecurityExpressionHandler(CustomPermissionEvaluator evaluator) {
-        DefaultMethodSecurityExpressionHandler expressionHandler = new DefaultMethodSecurityExpressionHandler();
-        expressionHandler.setPermissionEvaluator(evaluator);
-        return expressionHandler;
+        @Bean
+        public MethodSecurityExpressionHandler methodSecurityExpressionHandler(CustomPermissionEvaluator evaluator) {
+            DefaultMethodSecurityExpressionHandler expressionHandler = new DefaultMethodSecurityExpressionHandler();
+            expressionHandler.setPermissionEvaluator(evaluator);
+            return expressionHandler;
+        }
     }
 }

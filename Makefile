@@ -1,4 +1,7 @@
-.PHONY: infra-up infra-down test compile run-gateway run-planning k8s-local k8s-dev k8s-prod
+.PHONY: bootstrap infra-up infra-down test compile run-gateway run-planning k8s-local k8s-dev k8s-prod
+
+bootstrap:
+	./scripts/bootstrap.sh
 
 infra-up:
 	docker compose -f platform/compose/docker-compose.dev.yml up -d

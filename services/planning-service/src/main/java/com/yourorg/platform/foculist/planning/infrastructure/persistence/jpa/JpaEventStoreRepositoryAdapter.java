@@ -20,8 +20,15 @@ public class JpaEventStoreRepositoryAdapter implements EventStoreRepositoryPort 
     }
 
     @Override
-    public List<EventStore> findByAggregateId(UUID aggregateId, String aggregateType) {
-        return repository.findByAggregateIdAndAggregateTypeOrderByVersionAsc(aggregateId, aggregateType).stream()
+    public List<EventStore> findByAggregateId(String tenantId, UUID aggregateId, String aggregateType) {
+        return repository.findByAggregateIdAndAggregateTypeAndTenantIdOrderByVersionAsc(aggregateId, aggregateType, tenantId).stream()
+                .map(EventStoreJpaEntity::toDomain)
+                .toList();
+    }
+
+    @Override
+    public List<EventStore> findByAggregateIdAfterVersion(String tenantId, UUID aggregateId, String aggregateType, long version) {
+        return repository.findByAggregateIdAndAggregateTypeAndTenantIdAndVersionGreaterThanOrderByVersionAsc(aggregateId, aggregateType, tenantId, version).stream()
                 .map(EventStoreJpaEntity::toDomain)
                 .toList();
     }

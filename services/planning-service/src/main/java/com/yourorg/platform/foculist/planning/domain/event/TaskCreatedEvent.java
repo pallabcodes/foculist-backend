@@ -10,6 +10,7 @@ public record TaskCreatedEvent(
         String title,
         String description,
         String status,
+        String priority,
         long version,
         Instant occurredAt
 ) implements TaskEvent {}

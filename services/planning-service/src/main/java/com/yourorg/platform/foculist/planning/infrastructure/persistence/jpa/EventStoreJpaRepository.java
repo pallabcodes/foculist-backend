@@ -7,5 +7,8 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface EventStoreJpaRepository extends JpaRepository<EventStoreJpaEntity, UUID> {
-    List<EventStoreJpaEntity> findByAggregateIdAndAggregateTypeOrderByVersionAsc(UUID aggregateId, String aggregateType);
+    List<EventStoreJpaEntity> findByAggregateIdAndAggregateTypeAndTenantIdOrderByVersionAsc(UUID aggregateId, String aggregateType, String tenantId);
+    
+    List<EventStoreJpaEntity> findByAggregateIdAndAggregateTypeAndTenantIdAndVersionGreaterThanOrderByVersionAsc(
+            UUID aggregateId, String aggregateType, String tenantId, long version);
 }

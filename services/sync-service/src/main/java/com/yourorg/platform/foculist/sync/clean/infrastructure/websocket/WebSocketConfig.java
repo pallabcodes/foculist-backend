@@ -1,39 +1,36 @@
 package com.yourorg.platform.foculist.sync.clean.infrastructure.websocket;
 
+import java.util.Map;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.web.socket.config.annotation.EnableWebSocket;
-import org.springframework.web.socket.config.annotation.WebSocketConfigurer;
-import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistry;
+import org.springframework.web.reactive.HandlerMapping;
+import org.springframework.web.reactive.handler.SimpleUrlHandlerMapping;
+import org.springframework.web.reactive.socket.server.support.WebSocketHandlerAdapter;
 
 /**
- * WebSocket configuration for real-time sync.
- * <p>
- * Registers the {@link SyncWebSocketHandler} at {@code /ws/sync} with
- * SockJS fallback for browsers that don't support native WebSockets.
+ * Reactive WebSocket configuration for real-time sync.
  */
 @Configuration
-@EnableWebSocket
-public class WebSocketConfig implements WebSocketConfigurer {
+public class WebSocketConfig {
 
     private final SyncWebSocketHandler syncHandler;
-    private final JwtHandshakeInterceptor jwtInterceptor;
 
-    public WebSocketConfig(SyncWebSocketHandler syncHandler,
-                           JwtHandshakeInterceptor jwtInterceptor) {
+    public WebSocketConfig(SyncWebSocketHandler syncHandler) {
         this.syncHandler = syncHandler;
-        this.jwtInterceptor = jwtInterceptor;
     }
 
-    @Override
-    public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
-        registry.addHandler(syncHandler, "/ws/sync")
-                .addInterceptors(jwtInterceptor)
-                .setAllowedOriginPatterns("*")
-                .withSockJS();
+    @Bean
+    public HandlerMapping webSocketHandlerMapping() {
+        Map<String, SyncWebSocketHandler> map = Map.of("/ws/sync", syncHandler);
 
-        // Raw WebSocket (no SockJS) for native clients
-        registry.addHandler(syncHandler, "/ws/sync")
-                .addInterceptors(jwtInterceptor)
-                .setAllowedOriginPatterns("*");
+        SimpleUrlHandlerMapping handlerMapping = new SimpleUrlHandlerMapping();
+        handlerMapping.setOrder(1);
+        handlerMapping.setUrlMap(map);
+        return handlerMapping;
+    }
+
+    @Bean
+    public WebSocketHandlerAdapter handlerAdapter() {
+        return new WebSocketHandlerAdapter();
     }
 }

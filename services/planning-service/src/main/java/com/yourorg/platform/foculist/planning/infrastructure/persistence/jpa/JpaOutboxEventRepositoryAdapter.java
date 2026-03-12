@@ -57,4 +57,11 @@ public class JpaOutboxEventRepositoryAdapter implements OutboxEventRepositoryPor
     public int resetStuckProcessingEvents() {
         return outboxRepository.resetProcessingEvents();
     }
+
+    @Override
+    public List<OutboxEvent> findBatchAfter(Instant after, UUID tenantId, int limit) {
+        return outboxRepository.findBatchAfter(after, tenantId.toString(), PageRequest.of(0, limit)).stream()
+                .map(PlanningOutboxEventJpaEntity::toDomain)
+                .toList();
+    }
 }

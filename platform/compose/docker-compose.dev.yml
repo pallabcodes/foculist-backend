@@ -20,7 +20,7 @@ services:
       - "6379:6379"
 
   redpanda:
-    image: redpanda/redpanda:v23.3.6
+    image: redpandadata/redpanda:v23.3.6
     command:
       - redpanda
       - start

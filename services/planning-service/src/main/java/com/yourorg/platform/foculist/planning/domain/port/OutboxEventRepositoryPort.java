@@ -7,12 +7,9 @@ import java.util.UUID;
 
 public interface OutboxEventRepositoryPort {
     void save(OutboxEvent event);
-
     List<OutboxEvent> claimPendingBatch(int batchSize, int maxAttempts);
-
     void markPublished(UUID eventId, Instant publishedAt);
-
     void markFailed(UUID eventId, String errorMessage);
-
     int resetStuckProcessingEvents();
+    List<OutboxEvent> findBatchAfter(Instant after, UUID tenantId, int limit);
 }
