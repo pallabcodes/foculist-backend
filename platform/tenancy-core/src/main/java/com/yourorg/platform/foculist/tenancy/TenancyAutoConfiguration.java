@@ -10,6 +10,11 @@ import org.springframework.core.Ordered;
 import org.springframework.security.access.expression.method.DefaultMethodSecurityExpressionHandler;
 import org.springframework.security.access.expression.method.MethodSecurityExpressionHandler;
 import com.yourorg.platform.foculist.tenancy.security.CustomPermissionEvaluator;
+import org.springframework.beans.factory.ObjectProvider;
+import com.yourorg.platform.foculist.tenancy.web.GlobalResponseAdvice;
+import com.yourorg.platform.foculist.tenancy.web.RequestIdFilter;
+import com.yourorg.platform.foculist.tenancy.TenantContextFilter;
+import jakarta.servlet.DispatcherType;
 
 import org.springframework.web.client.RestTemplate;
 import org.springframework.boot.web.client.RestTemplateBuilder;
@@ -64,10 +69,14 @@ public class TenancyAutoConfiguration {
         }
 
         @Bean
-        public MethodSecurityExpressionHandler methodSecurityExpressionHandler(CustomPermissionEvaluator evaluator) {
+        public MethodSecurityExpressionHandler methodSecurityExpressionHandler(ObjectProvider<CustomPermissionEvaluator> evaluatorProvider) {
             DefaultMethodSecurityExpressionHandler expressionHandler = new DefaultMethodSecurityExpressionHandler();
-            expressionHandler.setPermissionEvaluator(evaluator);
+            evaluatorProvider.ifAvailable(expressionHandler::setPermissionEvaluator);
             return expressionHandler;
+        }
+        @Bean
+        public GlobalResponseAdvice globalResponseAdvice() {
+            return new GlobalResponseAdvice();
         }
     }
 }

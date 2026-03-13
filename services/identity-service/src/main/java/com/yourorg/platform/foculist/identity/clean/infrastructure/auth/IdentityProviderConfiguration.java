@@ -18,13 +18,13 @@ import java.net.URI;
 @Configuration
 public class IdentityProviderConfiguration {
 
-    @Value("${aws.cognito.userPoolId}")
+    @Value("${app.aws.cognito.userPoolId:fallback-pool}")
     private String userPoolId;
 
-    @Value("${aws.cognito.clientId}")
+    @Value("${app.aws.cognito.clientId:fallback-client}")
     private String clientId;
 
-    @Value("${aws.cognito.endpointOverride:}")
+    @Value("${app.aws.cognito.endpointOverride:}")
     private String endpointOverride;
 
     @Value("${keycloak.server-url:http://localhost:9090}")
