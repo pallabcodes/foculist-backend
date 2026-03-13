@@ -3,6 +3,12 @@
 bootstrap:
 	./scripts/bootstrap.sh
 
+launch:
+	./scripts/bootstrap.sh
+
+status:
+	docker compose ps
+
 infra-up:
 	docker compose -f platform/compose/docker-compose.dev.yml up -d
 
