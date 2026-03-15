@@ -10,8 +10,6 @@ import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
 import software.amazon.awssdk.services.dynamodb.model.PutItemRequest;
 
-@Component
-@ConditionalOnProperty(prefix = "app.sync.op-log", name = "mode", havingValue = "dynamodb")
 public class DynamoDbSyncRealtimeOpLogRepositoryAdapter implements SyncRealtimeOpLogRepositoryPort {
     private final DynamoDbClient dynamoDbClient;
     private final String tableName;

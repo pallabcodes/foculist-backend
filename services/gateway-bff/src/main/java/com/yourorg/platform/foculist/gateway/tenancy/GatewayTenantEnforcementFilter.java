@@ -42,7 +42,9 @@ public class GatewayTenantEnforcementFilter implements GlobalFilter, Ordered {
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
         String requestPath = exchange.getRequest().getURI().getPath();
-        if (properties.isSkipActuator() && requestPath.startsWith("/actuator")) {
+        if ((properties.isSkipActuator() && requestPath.startsWith("/actuator")) ||
+            requestPath.contains("/v3/api-docs") ||
+            requestPath.contains("/swagger-ui")) {
             return chain.filter(exchange);
         }
 

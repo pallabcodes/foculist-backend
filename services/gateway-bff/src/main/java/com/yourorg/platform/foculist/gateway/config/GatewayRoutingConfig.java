@@ -13,6 +13,24 @@ public class GatewayRoutingConfig {
     @Bean
     RouteLocator foculistRoutes(RouteLocatorBuilder builder, GatewayDownstreamProperties downstream) {
         return builder.routes()
+                // Internal OpenAPI routes for aggregation - MUST BE FIRST for precedence
+                .route("identity-docs", route -> route
+                        .path("/api/identity/v3/api-docs")
+                        .filters(f -> f.setPath("/v3/api-docs"))
+                        .uri(downstream.getIdentity()))
+                .route("planning-docs", route -> route
+                        .path("/api/planning/v3/api-docs")
+                        .filters(f -> f.setPath("/v3/api-docs"))
+                        .uri(downstream.getPlanning()))
+                .route("project-docs", route -> route
+                        .path("/api/project/v3/api-docs")
+                        .filters(f -> f.setPath("/v3/api-docs"))
+                        .uri(downstream.getProject()))
+                .route("sync-docs", route -> route
+                        .path("/api/sync/v3/api-docs")
+                        .filters(f -> f.setPath("/v3/api-docs"))
+                        .uri(downstream.getSync()))
+                // API Routes
                 .route("identity-auth-v2", route -> route
                         .path("/api/auth/**")
                         .and().header("X-API-Version", "2")
@@ -69,23 +87,6 @@ public class GatewayRoutingConfig {
                         .path("/api/resources/**")
                         .filters(filter -> filter.rewritePath("/api/resources(?<segment>/?.*)", "/v1${segment}"))
                         .uri(downstream.getResource()))
-                // Internal OpenAPI routes for aggregation
-                .route("identity-docs", route -> route
-                        .path("/api/identity/v3/api-docs")
-                        .filters(f -> f.rewritePath("/api/identity/v3/api-docs", "/v3/api-docs"))
-                        .uri(downstream.getIdentity()))
-                .route("planning-docs", route -> route
-                        .path("/api/planning/v3/api-docs")
-                        .filters(f -> f.rewritePath("/api/planning/v3/api-docs", "/v3/api-docs"))
-                        .uri(downstream.getPlanning()))
-                .route("project-docs", route -> route
-                        .path("/api/project/v3/api-docs")
-                        .filters(f -> f.rewritePath("/api/project/v3/api-docs", "/v3/api-docs"))
-                        .uri(downstream.getProject()))
-                .route("sync-docs", route -> route
-                        .path("/api/sync/v3/api-docs")
-                        .filters(f -> f.rewritePath("/api/sync/v3/api-docs", "/v3/api-docs"))
-                        .uri(downstream.getSync()))
                 .build();
     }
 }

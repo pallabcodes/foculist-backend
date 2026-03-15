@@ -5,13 +5,18 @@ import com.yourorg.platform.foculist.planning.domain.model.Task;
 import com.yourorg.platform.foculist.planning.domain.model.TaskSnapshot;
 import com.yourorg.platform.foculist.planning.domain.model.TaskSnapshotJob;
 import com.yourorg.platform.foculist.planning.domain.port.TaskSnapshotJobRepositoryPort;
-import com.yourorg.platform.foculist.planning.domain.port.TaskSnapshotRepositoryPort;
+import com.yourorg.platform.foculist.planning.infrastructure.persistence.mongodb.TaskSnapshotDocument;
 import java.time.Clock;
 import java.time.Instant;
 import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.mongodb.core.BulkOperations;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -20,7 +25,7 @@ public class PlanningTaskSnapshotWorker {
     private static final Logger log = LoggerFactory.getLogger(PlanningTaskSnapshotWorker.class);
 
     private final TaskSnapshotJobRepositoryPort snapshotJobRepository;
-    private final TaskSnapshotRepositoryPort taskSnapshotRepository;
+    private final MongoTemplate mongoTemplate;
     private final TaskReplayEngine replayEngine;
     private final Clock clock;
 
@@ -32,38 +37,63 @@ public class PlanningTaskSnapshotWorker {
 
     public PlanningTaskSnapshotWorker(
             TaskSnapshotJobRepositoryPort snapshotJobRepository,
-            TaskSnapshotRepositoryPort taskSnapshotRepository,
-            TaskReplayEngine replayEngine
-    ) {
-        this(snapshotJobRepository, taskSnapshotRepository, replayEngine, Clock.systemUTC());
-    }
-
-    PlanningTaskSnapshotWorker(
-            TaskSnapshotJobRepositoryPort snapshotJobRepository,
-            TaskSnapshotRepositoryPort taskSnapshotRepository,
+            MongoTemplate mongoTemplate,
             TaskReplayEngine replayEngine,
-            Clock clock
+            org.springframework.beans.factory.ObjectProvider<Clock> clockProvider
     ) {
         this.snapshotJobRepository = snapshotJobRepository;
-        this.taskSnapshotRepository = taskSnapshotRepository;
+        this.mongoTemplate = mongoTemplate;
         this.replayEngine = replayEngine;
-        this.clock = clock;
+        this.clock = clockProvider.getIfAvailable(Clock::systemUTC);
     }
 
     @Scheduled(fixedDelayString = "${app.event-sourcing.snapshot-poll-interval-ms:5000}")
     public void snapshot() {
         List<TaskSnapshotJob> jobs = snapshotJobRepository.claimPendingBatch(batchSize, maxAttempts);
+        if (jobs.isEmpty()) {
+            return;
+        }
+
+        BulkOperations ops = mongoTemplate.bulkOps(BulkOperations.BulkMode.UNORDERED, TaskSnapshotDocument.class);
+        boolean hasOps = false;
+
         for (TaskSnapshotJob job : jobs) {
             try {
                 Task task = replayEngine.restoreAtVersion(job.tenantId(), job.taskId(), job.targetVersion());
-                taskSnapshotRepository.save(TaskSnapshot.fromTask(task, Instant.now(clock)));
+                TaskSnapshot snapshot = TaskSnapshot.fromTask(task, Instant.now(clock));
+                
+                Query query = Query.query(Criteria.where("taskId").is(snapshot.taskId()).and("version").is(snapshot.version()));
+                Update update = new Update()
+                        .set("tenantId", snapshot.tenantId())
+                        .set("taskId", snapshot.taskId())
+                        .set("sprintId", snapshot.sprintId())
+                        .set("title", snapshot.title())
+                        .set("description", snapshot.description())
+                        .set("status", snapshot.status())
+                        .set("priority", snapshot.priority())
+                        .set("createdAt", snapshot.createdAt())
+                        .set("updatedAt", snapshot.updatedAt())
+                        .set("createdBy", snapshot.createdBy())
+                        .set("updatedBy", snapshot.updatedBy())
+                        .set("deletedAt", snapshot.deletedAt())
+                        .set("metadata", snapshot.metadata())
+                        .set("version", snapshot.version())
+                        .set("snapshottedAt", snapshot.snapshottedAt());
+                
+                ops.upsert(query, update);
+                hasOps = true;
+                
                 snapshotJobRepository.markCompleted(job.id(), Instant.now(clock));
-                log.info("Created task snapshot taskId={} version={}", job.taskId(), job.targetVersion());
             } catch (Exception ex) {
                 snapshotJobRepository.markFailed(job.id(), truncateError(ex.getMessage()));
                 log.warn("Failed to build task snapshot taskId={} version={} error={}",
                         job.taskId(), job.targetVersion(), ex.getMessage());
             }
+        }
+
+        if (hasOps) {
+            ops.execute();
+            log.info("Batch processed {} task snapshots into MongoDB", jobs.size());
         }
     }
 
@@ -74,3 +104,4 @@ public class PlanningTaskSnapshotWorker {
         return message.substring(0, 500);
     }
 }
+

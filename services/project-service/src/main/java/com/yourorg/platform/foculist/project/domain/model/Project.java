@@ -4,6 +4,8 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.util.UUID;
 
+import java.util.Map;
+
 public record Project(
         UUID id,
         String tenantId,
@@ -14,6 +16,10 @@ public record Project(
         LocalDate dueDate,
         Instant createdAt,
         Instant updatedAt,
+        String createdBy,
+        String updatedBy,
+        Instant deletedAt,
+        Map<String, Object> metadata,
         long version
 ) {
 
@@ -55,7 +61,8 @@ public record Project(
             ProjectStatus status,
             ProjectPriority priority,
             LocalDate dueDate,
-            Instant now
+            Instant now,
+            String createdBy
     ) {
         Instant timestamp = now == null ? Instant.now() : now;
         return new Project(
@@ -68,6 +75,10 @@ public record Project(
                 dueDate,
                 timestamp,
                 timestamp,
+                createdBy,
+                null,
+                null,
+                null,
                 0L
         );
     }

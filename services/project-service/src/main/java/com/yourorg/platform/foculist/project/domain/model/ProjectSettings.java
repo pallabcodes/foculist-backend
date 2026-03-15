@@ -8,12 +8,18 @@ import java.util.Locale;
 import java.util.Set;
 import java.util.UUID;
 
+import java.util.Map;
+
 public record ProjectSettings(
         UUID projectId,
         String tenantId,
         List<String> workflowStatuses,
         ProjectDefaultView defaultView,
+        Instant createdAt,
         Instant updatedAt,
+        String createdBy,
+        String updatedBy,
+        Map<String, Object> metadata,
         long version
 ) {
     private static final List<String> DEFAULT_WORKFLOW_STATUSES = List.of("TODO", "IN_PROGRESS", "REVIEW", "DONE");
@@ -28,8 +34,8 @@ public record ProjectSettings(
         if (defaultView == null) {
             throw new ProjectDomainException("Project settings defaultView is required");
         }
-        if (updatedAt == null) {
-            throw new ProjectDomainException("Project settings updatedAt is required");
+        if (createdAt == null || updatedAt == null) {
+            throw new ProjectDomainException("Project settings timestamps are required");
         }
         if (version < 0) {
             throw new ProjectDomainException("Project settings version cannot be negative");
@@ -39,13 +45,18 @@ public record ProjectSettings(
         workflowStatuses = normalizeWorkflowStatuses(workflowStatuses);
     }
 
-    public static ProjectSettings createDefault(UUID projectId, String tenantId, Instant now) {
+    public static ProjectSettings createDefault(UUID projectId, String tenantId, Instant now, String createdBy) {
+        Instant timestamp = now == null ? Instant.now() : now;
         return new ProjectSettings(
                 projectId,
                 tenantId,
                 DEFAULT_WORKFLOW_STATUSES,
                 ProjectDefaultView.BOARD,
-                now == null ? Instant.now() : now,
+                timestamp,
+                timestamp,
+                createdBy,
+                null,
+                null,
                 0L
         );
     }
@@ -53,7 +64,8 @@ public record ProjectSettings(
     public ProjectSettings update(
             List<String> requestedWorkflowStatuses,
             ProjectDefaultView requestedDefaultView,
-            Instant now
+            Instant now,
+            String updatedBy
     ) {
         List<String> statuses = requestedWorkflowStatuses == null
                 ? workflowStatuses
@@ -64,7 +76,11 @@ public record ProjectSettings(
                 tenantId,
                 statuses,
                 resolvedDefaultView,
+                createdAt,
                 now == null ? Instant.now() : now,
+                createdBy,
+                updatedBy,
+                metadata,
                 version
         );
     }

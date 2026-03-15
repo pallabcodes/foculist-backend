@@ -14,15 +14,24 @@ import jakarta.persistence.Version;
 import java.time.Instant;
 import java.util.UUID;
 
+import org.hibernate.annotations.SQLDelete;
+import org.hibernate.annotations.Where;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
+import java.util.Map;
+
 @Entity
 @Table(
         name = "planning_task",
         indexes = {
                 @Index(name = "idx_planning_task_tenant", columnList = "tenant_id"),
                 @Index(name = "idx_planning_task_tenant_sprint", columnList = "tenant_id,sprint_id"),
-                @Index(name = "idx_planning_task_tenant_status", columnList = "tenant_id,status")
+                @Index(name = "idx_planning_task_tenant_status", columnList = "tenant_id,status"),
+                @Index(name = "idx_planning_task_deleted_at", columnList = "deleted_at")
         }
 )
+@SQLDelete(sql = "UPDATE planning_task SET deleted_at = NOW() WHERE id = ? AND version = ?")
+@Where(clause = "deleted_at IS NULL")
 public class TaskJpaEntity {
     @Id
     private UUID id;
@@ -53,6 +62,19 @@ public class TaskJpaEntity {
     @Column(name = "updated_at", nullable = false)
     private Instant updatedAt;
 
+    @Column(name = "created_by")
+    private String createdBy;
+
+    @Column(name = "updated_by")
+    private String updatedBy;
+
+    @Column(name = "deleted_at")
+    private Instant deletedAt;
+
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "metadata", columnDefinition = "jsonb")
+    private Map<String, Object> metadata;
+
     @Version
     @Column(name = "version", nullable = false)
     private long version;
@@ -70,6 +92,10 @@ public class TaskJpaEntity {
             TaskPriority priority,
             Instant createdAt,
             Instant updatedAt,
+            String createdBy,
+            String updatedBy,
+            Instant deletedAt,
+            Map<String, Object> metadata,
             long version
     ) {
         this.id = id;
@@ -81,6 +107,10 @@ public class TaskJpaEntity {
         this.priority = priority;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
+        this.createdBy = createdBy;
+        this.updatedBy = updatedBy;
+        this.deletedAt = deletedAt;
+        this.metadata = metadata;
         this.version = version;
     }
 
@@ -95,6 +125,10 @@ public class TaskJpaEntity {
                 task.priority(),
                 task.createdAt(),
                 task.updatedAt(),
+                task.createdBy(),
+                task.updatedBy(),
+                task.deletedAt(),
+                task.metadata(),
                 task.version() != null ? task.version() : 0L
         );
     }
@@ -110,6 +144,10 @@ public class TaskJpaEntity {
                 priority,
                 createdAt,
                 updatedAt,
+                createdBy,
+                updatedBy,
+                deletedAt,
+                metadata,
                 version
         );
     }

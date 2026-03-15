@@ -60,7 +60,8 @@ public class JpaOutboxEventRepositoryAdapter implements OutboxEventRepositoryPor
 
     @Override
     public List<OutboxEvent> findBatchAfter(Instant after, UUID tenantId, int limit) {
-        return outboxRepository.findBatchAfter(after, tenantId.toString(), PageRequest.of(0, limit)).stream()
+        String tenantIdStr = tenantId != null ? tenantId.toString() : null;
+        return outboxRepository.findBatchAfter(after, tenantIdStr, PageRequest.of(0, limit)).stream()
                 .map(PlanningOutboxEventJpaEntity::toDomain)
                 .toList();
     }

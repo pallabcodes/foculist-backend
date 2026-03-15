@@ -14,17 +14,26 @@ import jakarta.persistence.Version;
 import java.time.Instant;
 import java.util.UUID;
 
+import org.hibernate.annotations.SQLDelete;
+import org.hibernate.annotations.Where;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
+import java.util.Map;
+
 @Entity
 @Table(
         name = "planning_sprint",
         indexes = {
                 @Index(name = "idx_planning_sprint_tenant", columnList = "tenant_id"),
-                @Index(name = "idx_planning_sprint_tenant_status", columnList = "tenant_id,status")
+                @Index(name = "idx_planning_sprint_tenant_status", columnList = "tenant_id,status"),
+                @Index(name = "idx_planning_sprint_deleted_at", columnList = "deleted_at")
         },
         uniqueConstraints = {
                 @UniqueConstraint(name = "uk_planning_sprint_tenant_name", columnNames = {"tenant_id", "name"})
         }
 )
+@SQLDelete(sql = "UPDATE planning_sprint SET deleted_at = NOW() WHERE id = ? AND version = ?")
+@Where(clause = "deleted_at IS NULL")
 public class SprintJpaEntity {
     @Id
     private UUID id;
@@ -51,6 +60,19 @@ public class SprintJpaEntity {
     @Column(name = "updated_at", nullable = false)
     private Instant updatedAt;
 
+    @Column(name = "created_by")
+    private String createdBy;
+
+    @Column(name = "updated_by")
+    private String updatedBy;
+
+    @Column(name = "deleted_at")
+    private Instant deletedAt;
+
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "metadata", columnDefinition = "jsonb")
+    private Map<String, Object> metadata;
+
     @Version
     @Column(name = "version", nullable = false)
     private long version;
@@ -67,6 +89,10 @@ public class SprintJpaEntity {
             Instant endDate,
             Instant createdAt,
             Instant updatedAt,
+            String createdBy,
+            String updatedBy,
+            Instant deletedAt,
+            Map<String, Object> metadata,
             long version
     ) {
         this.id = id;
@@ -77,6 +103,10 @@ public class SprintJpaEntity {
         this.endDate = endDate;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
+        this.createdBy = createdBy;
+        this.updatedBy = updatedBy;
+        this.deletedAt = deletedAt;
+        this.metadata = metadata;
         this.version = version;
     }
 
@@ -90,6 +120,10 @@ public class SprintJpaEntity {
                 sprint.endDate(),
                 sprint.createdAt(),
                 sprint.updatedAt(),
+                sprint.createdBy(),
+                sprint.updatedBy(),
+                sprint.deletedAt(),
+                sprint.metadata(),
                 sprint.version() != null ? sprint.version() : 0L
         );
     }
@@ -104,6 +138,10 @@ public class SprintJpaEntity {
                 endDate,
                 createdAt,
                 updatedAt,
+                createdBy,
+                updatedBy,
+                deletedAt,
+                metadata,
                 version
         );
     }

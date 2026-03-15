@@ -3,6 +3,8 @@ package com.yourorg.platform.foculist.planning.domain.model;
 import java.time.Instant;
 import java.util.UUID;
 
+import java.util.Map;
+
 public record Sprint(
         UUID id,
         String tenantId,
@@ -12,6 +14,10 @@ public record Sprint(
         Instant endDate,
         Instant createdAt,
         Instant updatedAt,
+        String createdBy,
+        String updatedBy,
+        Instant deletedAt,
+        Map<String, Object> metadata,
         Long version
 ) {
     public Sprint {
@@ -38,7 +44,7 @@ public record Sprint(
         }
     }
 
-    public Sprint update(String name, Instant startDate, Instant endDate, Instant now) {
-        return new Sprint(id, tenantId, name, status, startDate, endDate, createdAt, now, version);
+    public Sprint update(String name, Instant startDate, Instant endDate, Instant now, String updatedBy) {
+        return new Sprint(id, tenantId, name, status, startDate, endDate, createdAt, now, createdBy, updatedBy, deletedAt, metadata, version);
     }
 }

@@ -1,6 +1,7 @@
 plugins {
     id("org.springframework.boot") version "3.2.5" apply false
     id("io.spring.dependency-management") version "1.1.4" apply false
+    id("com.google.protobuf") version "0.9.4" apply false
     java
 }
 
@@ -51,6 +52,7 @@ configure(microservices.map { project(it) }) {
         "implementation"("io.micrometer:micrometer-registry-prometheus")
         "implementation"("io.micrometer:micrometer-tracing-bridge-otel")
         "implementation"("io.opentelemetry:opentelemetry-exporter-otlp")
+        "implementation"("net.logstash.logback:logstash-logback-encoder:7.4")
 
         "compileOnly"("org.projectlombok:lombok:1.18.32")
         "annotationProcessor"("org.projectlombok:lombok:1.18.32")
@@ -90,7 +92,7 @@ configure(mvcServices.map { project(it) }) {
         "implementation"("org.springframework.kafka:spring-kafka")
         "implementation"("org.flywaydb:flyway-core")
         "implementation"(project(":platform:tenancy-core"))
-        "runtimeOnly"("org.postgresql:postgresql")
+        "implementation"("org.postgresql:postgresql")
 
         "implementation"("io.jsonwebtoken:jjwt-api:0.12.5")
         "runtimeOnly"("io.jsonwebtoken:jjwt-impl:0.12.5")
@@ -112,10 +114,13 @@ configure(fluxServices.map { project(it) }) {
         "implementation"("org.springframework.boot:spring-boot-starter-security")
         "implementation"("org.springdoc:springdoc-openapi-starter-webflux-ui:2.5.0")
         "implementation"(project(":platform:tenancy-core"))
+        "implementation"("org.postgresql:postgresql")
     }
 }
 
 project(":services:gateway-bff") {
+    apply(plugin = "com.google.protobuf")
+    apply(from = "$rootDir/protobuf.gradle")
     dependencies {
         "implementation"(platform("org.springframework.cloud:spring-cloud-dependencies:2023.0.3"))
         "implementation"("org.springframework.cloud:spring-cloud-starter-gateway")
@@ -123,13 +128,26 @@ project(":services:gateway-bff") {
         "implementation"("io.jsonwebtoken:jjwt-api:0.12.5")
         "runtimeOnly"("io.jsonwebtoken:jjwt-impl:0.12.5")
         "runtimeOnly"("io.jsonwebtoken:jjwt-jackson:0.12.5")
+        "implementation"("net.devh:grpc-client-spring-boot-starter:3.1.0.RELEASE")
+        "implementation"("io.grpc:grpc-netty:1.63.0")
+        "implementation"("io.grpc:grpc-netty-shaded:1.63.0")
+        "implementation"("io.grpc:grpc-protobuf:1.63.0")
+        "implementation"("io.grpc:grpc-stub:1.63.0")
+        "implementation"("javax.annotation:javax.annotation-api:1.3.2")
         "testImplementation"("org.springframework.security:spring-security-test")
     }
 }
 
 project(":services:identity-service") {
+    apply(plugin = "com.google.protobuf")
+    apply(from = "$rootDir/protobuf.gradle")
     dependencies {
         "implementation"("org.springframework.boot:spring-boot-starter-oauth2-resource-server")
+        "implementation"("net.devh:grpc-server-spring-boot-starter:3.1.0.RELEASE")
+        "implementation"("io.grpc:grpc-netty-shaded:1.63.0")
+        "implementation"("io.grpc:grpc-protobuf:1.63.0")
+        "implementation"("io.grpc:grpc-stub:1.63.0")
+        "implementation"("javax.annotation:javax.annotation-api:1.3.2")
     }
 }
 
@@ -153,3 +171,4 @@ project(":platform:tenancy-core") {
         "testImplementation"("org.springframework.boot:spring-boot-starter-test:3.2.5")
     }
 }
+

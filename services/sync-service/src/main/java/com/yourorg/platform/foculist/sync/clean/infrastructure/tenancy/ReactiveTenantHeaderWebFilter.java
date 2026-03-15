@@ -13,7 +13,10 @@ import reactor.core.publisher.Mono;
 public class ReactiveTenantHeaderWebFilter implements WebFilter {
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, WebFilterChain chain) {
-        if (exchange.getRequest().getPath().value().startsWith("/actuator")) {
+        String path = exchange.getRequest().getPath().value();
+        if (path.startsWith("/actuator") ||
+            path.contains("/v3/api-docs") ||
+            path.contains("/swagger-ui")) {
             return chain.filter(exchange);
         }
 

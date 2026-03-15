@@ -29,7 +29,21 @@ public class GlobalResponseAdvice implements ResponseBodyAdvice<Object> {
     public boolean supports(MethodParameter returnType, Class<? extends HttpMessageConverter<?>> converterType) {
         // Skip wrapping if it's already an ApiResponse or a raw String (to avoid ClassCastException in some converters)
         Class<?> parameterType = returnType.getParameterType();
-        return !ApiResponse.class.isAssignableFrom(parameterType) && !String.class.isAssignableFrom(parameterType);
+        if (ApiResponse.class.isAssignableFrom(parameterType) || String.class.isAssignableFrom(parameterType)) {
+            return false;
+        }
+
+        // Skip documentation paths
+        org.springframework.web.context.request.ServletRequestAttributes attributes = 
+            (org.springframework.web.context.request.ServletRequestAttributes) org.springframework.web.context.request.RequestContextHolder.getRequestAttributes();
+        if (attributes != null) {
+            String path = attributes.getRequest().getRequestURI();
+            if (path.contains("/v3/api-docs") || path.contains("/swagger-ui")) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     @Override

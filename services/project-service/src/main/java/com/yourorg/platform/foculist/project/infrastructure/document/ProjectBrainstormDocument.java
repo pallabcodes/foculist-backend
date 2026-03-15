@@ -4,9 +4,11 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.index.CompoundIndex;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 @Document("project_brainstorm")
+@CompoundIndex(name = "tenant_project_idx", def = "{'tenantId': 1, 'projectId': 1}")
 public class ProjectBrainstormDocument {
     @Id
     private String id;

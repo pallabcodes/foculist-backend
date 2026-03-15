@@ -13,6 +13,10 @@ import jakarta.persistence.Table;
 import java.time.Instant;
 import java.util.UUID;
 
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
+import java.util.Map;
+
 @Entity
 @Table(
         name = "planning_task_snapshot",
@@ -53,6 +57,19 @@ public class TaskSnapshotJpaEntity {
     @Column(name = "updated_at", nullable = false)
     private Instant updatedAt;
 
+    @Column(name = "created_by")
+    private String createdBy;
+
+    @Column(name = "updated_by")
+    private String updatedBy;
+
+    @Column(name = "deleted_at")
+    private Instant deletedAt;
+
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "metadata", columnDefinition = "jsonb")
+    private Map<String, Object> metadata;
+
     @Column(name = "version", nullable = false)
     private long version;
 
@@ -73,6 +90,10 @@ public class TaskSnapshotJpaEntity {
             TaskPriority priority,
             Instant createdAt,
             Instant updatedAt,
+            String createdBy,
+            String updatedBy,
+            Instant deletedAt,
+            Map<String, Object> metadata,
             long version,
             Instant snapshottedAt
     ) {
@@ -86,6 +107,10 @@ public class TaskSnapshotJpaEntity {
         this.priority = priority;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
+        this.createdBy = createdBy;
+        this.updatedBy = updatedBy;
+        this.deletedAt = deletedAt;
+        this.metadata = metadata;
         this.version = version;
         this.snapshottedAt = snapshottedAt;
     }
@@ -102,6 +127,10 @@ public class TaskSnapshotJpaEntity {
                 snapshot.priority(),
                 snapshot.createdAt(),
                 snapshot.updatedAt(),
+                snapshot.createdBy(),
+                snapshot.updatedBy(),
+                snapshot.deletedAt(),
+                snapshot.metadata(),
                 snapshot.version(),
                 snapshot.snapshottedAt()
         );
@@ -119,6 +148,10 @@ public class TaskSnapshotJpaEntity {
                 priority,
                 createdAt,
                 updatedAt,
+                createdBy,
+                updatedBy,
+                deletedAt,
+                metadata,
                 version,
                 snapshottedAt
         );

@@ -9,17 +9,22 @@ import com.yourorg.platform.foculist.planning.domain.event.TaskUpdatedEvent;
 import com.yourorg.platform.foculist.planning.domain.model.OutboxEvent;
 import com.yourorg.platform.foculist.planning.domain.model.ProjectionCheckpoint;
 import com.yourorg.platform.foculist.planning.domain.model.TaskPriority;
-import com.yourorg.platform.foculist.planning.domain.model.TaskProjection;
 import com.yourorg.platform.foculist.planning.domain.model.TaskStatus;
 import com.yourorg.platform.foculist.planning.domain.port.OutboxEventRepositoryPort;
 import com.yourorg.platform.foculist.planning.domain.port.ProjectionCheckpointRepositoryPort;
-import com.yourorg.platform.foculist.planning.domain.port.TaskProjectionRepositoryPort;
+import com.yourorg.platform.foculist.planning.infrastructure.persistence.mongodb.TaskProjectionDocument;
 import java.time.Clock;
 import java.time.Instant;
 import java.util.List;
+import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.mongodb.core.BulkOperations;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,8 +35,8 @@ public class PlanningTaskProjectionProcessor {
     private static final String PROJECTION_NAME = "planning-task-list";
 
     private final OutboxEventRepositoryPort outboxEventRepository;
-    private final TaskProjectionRepositoryPort taskProjectionRepository;
     private final ProjectionCheckpointRepositoryPort checkpointRepository;
+    private final MongoTemplate mongoTemplate;
     private final ObjectMapper objectMapper;
     private final Clock clock;
 
@@ -40,25 +45,16 @@ public class PlanningTaskProjectionProcessor {
 
     public PlanningTaskProjectionProcessor(
             OutboxEventRepositoryPort outboxEventRepository,
-            TaskProjectionRepositoryPort taskProjectionRepository,
             ProjectionCheckpointRepositoryPort checkpointRepository,
-            ObjectMapper objectMapper
-    ) {
-        this(outboxEventRepository, taskProjectionRepository, checkpointRepository, objectMapper, Clock.systemUTC());
-    }
-
-    PlanningTaskProjectionProcessor(
-            OutboxEventRepositoryPort outboxEventRepository,
-            TaskProjectionRepositoryPort taskProjectionRepository,
-            ProjectionCheckpointRepositoryPort checkpointRepository,
+            MongoTemplate mongoTemplate,
             ObjectMapper objectMapper,
-            Clock clock
+            org.springframework.beans.factory.ObjectProvider<Clock> clockProvider
     ) {
         this.outboxEventRepository = outboxEventRepository;
-        this.taskProjectionRepository = taskProjectionRepository;
         this.checkpointRepository = checkpointRepository;
+        this.mongoTemplate = mongoTemplate;
         this.objectMapper = objectMapper;
-        this.clock = clock;
+        this.clock = clockProvider.getIfAvailable(Clock::systemUTC);
     }
 
     @Scheduled(fixedDelayString = "${app.event-sourcing.projection-poll-interval-ms:2000}")
@@ -74,76 +70,83 @@ public class PlanningTaskProjectionProcessor {
             return;
         }
 
+        BulkOperations ops = mongoTemplate.bulkOps(BulkOperations.BulkMode.UNORDERED, TaskProjectionDocument.class);
+        boolean hasOps = false;
+
         for (OutboxEvent event : events) {
-            apply(event);
+            if (addOp(ops, event)) {
+                hasOps = true;
+            }
             checkpoint = checkpoint.advance(event.occurredAt(), event.id(), Instant.now(clock));
-            checkpointRepository.save(checkpoint);
         }
-        log.info("Projected {} task events into read model", events.size());
+
+        if (hasOps) {
+            ops.execute();
+        }
+
+        checkpointRepository.save(checkpoint);
+        log.info("Projected {} task events into MongoDB read model via BulkOps", events.size());
     }
 
-    private void apply(OutboxEvent event) {
+    private boolean addOp(BulkOperations ops, OutboxEvent event) {
         try {
             switch (event.eventType()) {
                 case TaskEventTypes.TASK_CREATED -> {
                     TaskCreatedEvent payload = objectMapper.readValue(event.payload(), TaskCreatedEvent.class);
-                    taskProjectionRepository.save(new TaskProjection(
-                            payload.taskId(),
-                            payload.tenantId(),
-                            payload.sprintId(),
-                            payload.title(),
-                            payload.description(),
-                            TaskStatus.from(payload.status()),
-                            TaskPriority.from(payload.priority()),
-                            payload.occurredAt(),
-                            payload.occurredAt(),
-                            payload.version()
-                    ));
+                    Query query = query(payload.taskId(), payload.tenantId());
+                    Update update = new Update()
+                            .set("taskId", payload.taskId())
+                            .set("tenantId", payload.tenantId())
+                            .set("sprintId", payload.sprintId())
+                            .set("title", payload.title())
+                            .set("description", payload.description())
+                            .set("status", TaskStatus.from(payload.status()))
+                            .set("priority", TaskPriority.from(payload.priority()))
+                            .set("createdAt", payload.occurredAt())
+                            .set("updatedAt", payload.occurredAt())
+                            .set("version", payload.version());
+                    ops.upsert(query, update);
+                    return true;
                 }
                 case TaskEventTypes.TASK_UPDATED -> {
                     TaskUpdatedEvent payload = objectMapper.readValue(event.payload(), TaskUpdatedEvent.class);
-                    TaskProjection existing = taskProjectionRepository.findByIdAndTenantId(payload.taskId(), payload.tenantId())
-                            .orElseThrow();
-                    taskProjectionRepository.save(new TaskProjection(
-                            existing.id(),
-                            existing.tenantId(),
-                            payload.sprintId(),
-                            payload.title(),
-                            payload.description(),
-                            existing.status(),
-                            TaskPriority.from(payload.priority()),
-                            existing.createdAt(),
-                            payload.occurredAt(),
-                            payload.version()
-                    ));
+                    Query query = query(payload.taskId(), payload.tenantId());
+                    Update update = new Update()
+                            .set("sprintId", payload.sprintId())
+                            .set("title", payload.title())
+                            .set("description", payload.description())
+                            .set("priority", TaskPriority.from(payload.priority()))
+                            .set("updatedAt", payload.occurredAt())
+                            .set("version", payload.version());
+                    ops.updateOne(query, update);
+                    return true;
                 }
                 case TaskEventTypes.TASK_STATUS_CHANGED -> {
                     TaskStatusChangedEvent payload = objectMapper.readValue(event.payload(), TaskStatusChangedEvent.class);
-                    TaskProjection existing = taskProjectionRepository.findByIdAndTenantId(payload.taskId(), payload.tenantId())
-                            .orElseThrow();
-                    taskProjectionRepository.save(new TaskProjection(
-                            existing.id(),
-                            existing.tenantId(),
-                            existing.sprintId(),
-                            existing.title(),
-                            existing.description(),
-                            TaskStatus.from(payload.newStatus()),
-                            existing.priority(),
-                            existing.createdAt(),
-                            payload.occurredAt(),
-                            payload.version()
-                    ));
+                    Query query = query(payload.taskId(), payload.tenantId());
+                    Update update = new Update()
+                            .set("status", TaskStatus.from(payload.newStatus()))
+                            .set("updatedAt", payload.occurredAt())
+                            .set("version", payload.version());
+                    ops.updateOne(query, update);
+                    return true;
                 }
                 case TaskEventTypes.TASK_DELETED -> {
                     TaskDeletedEvent payload = objectMapper.readValue(event.payload(), TaskDeletedEvent.class);
-                    taskProjectionRepository.deleteByIdAndTenantId(payload.taskId(), payload.tenantId());
+                    ops.remove(query(payload.taskId(), payload.tenantId()));
+                    return true;
                 }
                 default -> {
-                    return;
+                    return false;
                 }
             }
         } catch (Exception ex) {
-            throw new IllegalStateException("Failed to project outbox event " + event.id(), ex);
+            log.error("Failed to parse event payload for event id: {}", event.id(), ex);
+            return false;
         }
+    }
+
+    private Query query(UUID taskId, String tenantId) {
+        return Query.query(Criteria.where("taskId").is(taskId).and("tenantId").is(tenantId));
     }
 }

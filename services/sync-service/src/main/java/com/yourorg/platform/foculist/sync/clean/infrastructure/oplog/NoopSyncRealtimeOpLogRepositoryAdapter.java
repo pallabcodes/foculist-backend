@@ -5,8 +5,6 @@ import com.yourorg.platform.foculist.sync.clean.domain.port.SyncRealtimeOpLogRep
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.stereotype.Component;
 
-@Component
-@ConditionalOnMissingBean(SyncRealtimeOpLogRepositoryPort.class)
 public class NoopSyncRealtimeOpLogRepositoryAdapter implements SyncRealtimeOpLogRepositoryPort {
     @Override
     public void append(SyncRealtimeOpLogEntry entry) {

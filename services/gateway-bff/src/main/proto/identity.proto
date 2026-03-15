@@ -1,0 +1,46 @@
+syntax = "proto3";
+
+package com.yourorg.platform.foculist.identity.grpc;
+
+option java_multiple_files = true;
+option java_package = "com.yourorg.platform.foculist.identity.grpc";
+
+service IdentityService {
+  rpc Authenticate (AuthRequest) returns (AuthResponse);
+  rpc ValidateToken (ValidationRequest) returns (ValidationResponse);
+  rpc GetUserPermissions (PermissionRequest) returns (PermissionResponse);
+}
+
+message AuthRequest {
+  string email = 1;
+  string password = 2;
+  string tenant_id = 3;
+}
+
+message AuthResponse {
+  string access_token = 1;
+  string id_token = 2;
+  string refresh_token = 3;
+  int32 expires_in = 4;
+}
+
+message ValidationRequest {
+  string token = 1;
+}
+
+message ValidationResponse {
+  bool valid = 1;
+  string user_id = 2;
+  string email = 3;
+  string tenant_id = 4;
+  repeated string roles = 5;
+}
+
+message PermissionRequest {
+  string user_id = 1;
+  string tenant_id = 2;
+}
+
+message PermissionResponse {
+  repeated string permissions = 1;
+}

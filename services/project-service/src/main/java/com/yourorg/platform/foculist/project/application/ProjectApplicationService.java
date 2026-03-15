@@ -16,6 +16,7 @@ import java.time.ZoneOffset;
 import java.time.format.DateTimeParseException;
 import java.util.List;
 import java.util.UUID;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,6 +26,7 @@ public class ProjectApplicationService {
     private final ProjectSettingsRepositoryPort projectSettingsRepository;
     private final Clock clock;
 
+    @Autowired
     public ProjectApplicationService(
             ProjectRepositoryPort projectRepository,
             ProjectSettingsRepositoryPort projectSettingsRepository
@@ -59,10 +61,11 @@ public class ProjectApplicationService {
                 ProjectStatus.from(command.status()),
                 ProjectPriority.from(command.priority()),
                 parseDueDate(command.dueDate(), now),
-                now
+                now,
+                "system" // Audit field: createdBy
         );
         Project saved = projectRepository.save(project);
-        projectSettingsRepository.save(ProjectSettings.createDefault(saved.id(), tenantId, now));
+        projectSettingsRepository.save(ProjectSettings.createDefault(saved.id(), tenantId, now, "system"));
         return toSummaryView(saved);
     }
 
@@ -77,12 +80,13 @@ public class ProjectApplicationService {
 
         Instant now = Instant.now(clock);
         ProjectSettings current = projectSettingsRepository.findByProjectIdAndTenantId(project.id(), tenantId)
-                .orElseGet(() -> ProjectSettings.createDefault(project.id(), tenantId, now));
+                .orElseGet(() -> ProjectSettings.createDefault(project.id(), tenantId, now, "system"));
 
         ProjectSettings saved = projectSettingsRepository.save(current.update(
                 command.workflowStatuses(),
                 ProjectDefaultView.fromNullable(command.defaultView()),
-                now
+                now,
+                "system" // Audit field: updatedBy
         ));
         return toSettingsView(saved);
     }

@@ -3,6 +3,8 @@ package com.yourorg.platform.foculist.planning.domain.model;
 import java.time.Instant;
 import java.util.UUID;
 
+import java.util.Map;
+
 public record Task(
         UUID id,
         String tenantId,
@@ -13,6 +15,10 @@ public record Task(
         TaskPriority priority,
         Instant createdAt,
         Instant updatedAt,
+        String createdBy,
+        String updatedBy,
+        Instant deletedAt,
+        Map<String, Object> metadata,
         Long version
 ) {
     public Task {
@@ -43,7 +49,8 @@ public record Task(
             String description,
             TaskStatus status,
             TaskPriority priority,
-            Instant now
+            Instant now,
+            String createdBy
     ) {
         return new Task(
                 UUID.randomUUID(),
@@ -55,15 +62,19 @@ public record Task(
                 priority,
                 now,
                 now,
+                createdBy,
+                null,
+                null,
+                null,
                 0L
         );
     }
 
-    public Task update(UUID sprintId, String title, String description, TaskPriority priority, Instant now) {
-        return new Task(id, tenantId, sprintId, title.trim(), description, status, priority, createdAt, now, version);
+    public Task update(UUID sprintId, String title, String description, TaskPriority priority, Instant now, String updatedBy) {
+        return new Task(id, tenantId, sprintId, title.trim(), description, status, priority, createdAt, now, createdBy, updatedBy, deletedAt, metadata, version);
     }
 
-    public Task updateStatus(TaskStatus newStatus, Instant now) {
-        return new Task(id, tenantId, sprintId, title, description, newStatus, priority, createdAt, now, version);
+    public Task updateStatus(TaskStatus newStatus, Instant now, String updatedBy) {
+        return new Task(id, tenantId, sprintId, title, description, newStatus, priority, createdAt, now, createdBy, updatedBy, deletedAt, metadata, version);
     }
 }

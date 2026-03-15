@@ -3,6 +3,8 @@ package com.yourorg.platform.foculist.planning.domain.model;
 import java.time.Instant;
 import java.util.UUID;
 
+import java.util.Map;
+
 public record TaskSnapshot(
         UUID id,
         String tenantId,
@@ -14,6 +16,10 @@ public record TaskSnapshot(
         TaskPriority priority,
         Instant createdAt,
         Instant updatedAt,
+        String createdBy,
+        String updatedBy,
+        Instant deletedAt,
+        Map<String, Object> metadata,
         long version,
         Instant snapshottedAt
 ) {
@@ -53,6 +59,10 @@ public record TaskSnapshot(
                 task.priority(),
                 task.createdAt(),
                 task.updatedAt(),
+                task.createdBy(),
+                task.updatedBy(),
+                task.deletedAt(),
+                task.metadata(),
                 task.version() == null ? 0L : task.version(),
                 snapshottedAt
         );
@@ -69,6 +79,10 @@ public record TaskSnapshot(
                 priority,
                 createdAt,
                 updatedAt,
+                createdBy,
+                updatedBy,
+                deletedAt,
+                metadata,
                 version
         );
     }

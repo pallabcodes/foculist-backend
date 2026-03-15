@@ -20,6 +20,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
+import java.util.Map;
+
 @Entity
 @Table(
         name = "project_settings",
@@ -48,8 +52,21 @@ public class ProjectSettingsJpaEntity {
     @Column(name = "default_view", nullable = false, length = 32)
     private ProjectDefaultView defaultView;
 
+    @Column(name = "created_at", nullable = false)
+    private Instant createdAt;
+
     @Column(name = "updated_at", nullable = false)
     private Instant updatedAt;
+
+    @Column(name = "created_by")
+    private String createdBy;
+
+    @Column(name = "updated_by")
+    private String updatedBy;
+
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "metadata", columnDefinition = "jsonb")
+    private Map<String, Object> metadata;
 
     @Version
     @Column(name = "version", nullable = false)
@@ -63,14 +80,22 @@ public class ProjectSettingsJpaEntity {
             String tenantId,
             List<String> workflowStatuses,
             ProjectDefaultView defaultView,
+            Instant createdAt,
             Instant updatedAt,
+            String createdBy,
+            String updatedBy,
+            Map<String, Object> metadata,
             long version
     ) {
         this.projectId = projectId;
         this.tenantId = tenantId;
         this.workflowStatuses = workflowStatuses;
         this.defaultView = defaultView;
+        this.createdAt = createdAt;
         this.updatedAt = updatedAt;
+        this.createdBy = createdBy;
+        this.updatedBy = updatedBy;
+        this.metadata = metadata;
         this.version = version;
     }
 
@@ -80,7 +105,11 @@ public class ProjectSettingsJpaEntity {
                 settings.tenantId(),
                 new ArrayList<>(settings.workflowStatuses()),
                 settings.defaultView(),
+                settings.createdAt(),
                 settings.updatedAt(),
+                settings.createdBy(),
+                settings.updatedBy(),
+                settings.metadata(),
                 settings.version()
         );
     }
@@ -91,7 +120,11 @@ public class ProjectSettingsJpaEntity {
                 tenantId,
                 workflowStatuses,
                 defaultView,
+                createdAt,
                 updatedAt,
+                createdBy,
+                updatedBy,
+                metadata,
                 version
         );
     }

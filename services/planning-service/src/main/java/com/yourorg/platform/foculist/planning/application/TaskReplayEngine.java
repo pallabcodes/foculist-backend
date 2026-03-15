@@ -122,6 +122,10 @@ public class TaskReplayEngine {
                 TaskPriority.from(event.priority()),
                 event.occurredAt(),
                 event.occurredAt(),
+                "system-replay", // Audit field: createdBy
+                null,            // Audit field: updatedBy
+                null,            // Soft delete: deletedAt
+                null,            // Extensibility: metadata
                 event.version()
         );
     }
@@ -140,6 +144,10 @@ public class TaskReplayEngine {
                 TaskPriority.from(event.priority()),
                 current.createdAt(),
                 event.occurredAt(),
+                current.createdBy(),
+                "system-replay", // Audit field: updatedBy
+                current.deletedAt(),
+                current.metadata(),
                 event.version()
         );
     }
@@ -158,6 +166,10 @@ public class TaskReplayEngine {
                 current.priority(),
                 current.createdAt(),
                 event.occurredAt(),
+                current.createdBy(),
+                "system-replay", // Audit field: updatedBy
+                current.deletedAt(),
+                current.metadata(),
                 event.version()
         );
     }

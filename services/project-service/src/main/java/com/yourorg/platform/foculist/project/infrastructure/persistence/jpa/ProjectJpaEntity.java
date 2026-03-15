@@ -15,14 +15,23 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.util.UUID;
 
+import org.hibernate.annotations.SQLDelete;
+import org.hibernate.annotations.Where;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
+import java.util.Map;
+
 @Entity
 @Table(
         name = "project_item",
         indexes = {
                 @Index(name = "idx_project_item_tenant", columnList = "tenant_id"),
-                @Index(name = "idx_project_item_tenant_status", columnList = "tenant_id,status")
+                @Index(name = "idx_project_item_tenant_status", columnList = "tenant_id,status"),
+                @Index(name = "idx_project_item_deleted_at", columnList = "deleted_at")
         }
 )
+@SQLDelete(sql = "UPDATE project_item SET deleted_at = NOW() WHERE id = ? AND version = ?")
+@Where(clause = "deleted_at IS NULL")
 public class ProjectJpaEntity {
     @Id
     private UUID id;
@@ -53,6 +62,19 @@ public class ProjectJpaEntity {
     @Column(name = "updated_at", nullable = false)
     private Instant updatedAt;
 
+    @Column(name = "created_by")
+    private String createdBy;
+
+    @Column(name = "updated_by")
+    private String updatedBy;
+
+    @Column(name = "deleted_at")
+    private Instant deletedAt;
+
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "metadata", columnDefinition = "jsonb")
+    private Map<String, Object> metadata;
+
     @Version
     @Column(name = "version", nullable = false)
     private long version;
@@ -70,6 +92,10 @@ public class ProjectJpaEntity {
             LocalDate dueDate,
             Instant createdAt,
             Instant updatedAt,
+            String createdBy,
+            String updatedBy,
+            Instant deletedAt,
+            Map<String, Object> metadata,
             long version
     ) {
         this.id = id;
@@ -81,6 +107,10 @@ public class ProjectJpaEntity {
         this.dueDate = dueDate;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
+        this.createdBy = createdBy;
+        this.updatedBy = updatedBy;
+        this.deletedAt = deletedAt;
+        this.metadata = metadata;
         this.version = version;
     }
 
@@ -95,6 +125,10 @@ public class ProjectJpaEntity {
                 project.dueDate(),
                 project.createdAt(),
                 project.updatedAt(),
+                project.createdBy(),
+                project.updatedBy(),
+                project.deletedAt(),
+                project.metadata(),
                 project.version()
         );
     }
@@ -110,6 +144,10 @@ public class ProjectJpaEntity {
                 dueDate,
                 createdAt,
                 updatedAt,
+                createdBy,
+                updatedBy,
+                deletedAt,
+                metadata,
                 version
         );
     }

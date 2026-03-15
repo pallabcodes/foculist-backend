@@ -24,7 +24,10 @@ public class TenantContextFilter extends OncePerRequestFilter {
 
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
-        return properties.isSkipActuator() && request.getRequestURI().startsWith("/actuator");
+        String path = request.getRequestURI();
+        return (properties.isSkipActuator() && path.startsWith("/actuator")) ||
+               path.contains("/v3/api-docs") ||
+               path.contains("/swagger-ui");
     }
 
     @Override

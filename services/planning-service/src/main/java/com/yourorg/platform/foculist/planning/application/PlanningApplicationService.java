@@ -59,7 +59,8 @@ public class PlanningApplicationService {
                 command.description(),
                 TaskStatus.from(command.status()),
                 TaskPriority.from(command.priority()),
-                Instant.now(clock)
+                Instant.now(clock),
+                "system" // Audit field: createdBy
         );
 
         Task saved = taskRepository.save(task);
@@ -104,7 +105,8 @@ public class PlanningApplicationService {
                 command.title(),
                 command.description(),
                 TaskPriority.from(command.priority()),
-                Instant.now(clock)
+                Instant.now(clock),
+                "system" // Audit field: updatedBy
         );
         Task saved = taskRepository.save(updated);
 
@@ -123,7 +125,7 @@ public class PlanningApplicationService {
         Task task = taskRepository.findByIdAndTenantId(taskId, tenantId)
                 .orElseThrow(() -> new PlanningDomainException("Task not found"));
         String oldStatus = task.status().name();
-        Task updated = task.updateStatus(TaskStatus.from(status), Instant.now(clock));
+        Task updated = task.updateStatus(TaskStatus.from(status), Instant.now(clock), "system");
         Task saved = taskRepository.save(updated);
 
         TaskStatusChangedEvent domainEvent = new TaskStatusChangedEvent(
@@ -165,6 +167,10 @@ public class PlanningApplicationService {
                 Instant.parse(command.endDate()),
                 Instant.now(clock),
                 Instant.now(clock),
+                "system", // Audit: createdBy
+                null,     // Audit: updatedBy
+                null,     // Soft delete: deletedAt
+                null,     // Metadata
                 0L
         );
         Sprint saved = sprintRepository.save(sprint);
@@ -179,7 +185,8 @@ public class PlanningApplicationService {
                 command.name(),
                 Instant.parse(command.startDate()),
                 Instant.parse(command.endDate()),
-                Instant.now(clock)
+                Instant.now(clock),
+                "system" // Audit: updatedBy
         );
         Sprint saved = sprintRepository.save(updated);
         return toSprintView(saved);
