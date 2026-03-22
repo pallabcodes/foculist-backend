@@ -89,6 +89,7 @@ configure(mvcServices.map { project(it) }) {
         "implementation"("org.springframework.boot:spring-boot-starter-amqp")
         "implementation"("org.springframework.boot:spring-boot-starter-security")
         "implementation"("org.springframework.boot:spring-boot-starter-oauth2-client")
+        "implementation"("org.springframework.boot:spring-boot-starter-oauth2-resource-server")
         "implementation"("org.springframework.kafka:spring-kafka")
         "implementation"("org.flywaydb:flyway-core")
         "implementation"(project(":platform:tenancy-core"))
@@ -97,6 +98,8 @@ configure(mvcServices.map { project(it) }) {
         "implementation"("io.jsonwebtoken:jjwt-api:0.12.5")
         "runtimeOnly"("io.jsonwebtoken:jjwt-impl:0.12.5")
         "runtimeOnly"("io.jsonwebtoken:jjwt-jackson:0.12.5")
+
+        "implementation"("io.hypersistence:hypersistence-utils-hibernate-63:3.7.3")
 
         "implementation"("io.github.resilience4j:resilience4j-ratelimiter:2.2.0")
     }
@@ -124,6 +127,7 @@ project(":services:gateway-bff") {
     dependencies {
         "implementation"(platform("org.springframework.cloud:spring-cloud-dependencies:2023.0.3"))
         "implementation"("org.springframework.cloud:spring-cloud-starter-gateway")
+        "implementation"("org.springframework.cloud:spring-cloud-starter-circuitbreaker-reactor-resilience4j")
         "implementation"("org.springframework.boot:spring-boot-starter-oauth2-resource-server")
         "implementation"("io.jsonwebtoken:jjwt-api:0.12.5")
         "runtimeOnly"("io.jsonwebtoken:jjwt-impl:0.12.5")
@@ -165,10 +169,11 @@ project(":platform:tenancy-core") {
         "implementation"("io.jsonwebtoken:jjwt-api:0.12.5")
         "runtimeOnly"("io.jsonwebtoken:jjwt-impl:0.12.5")
         "runtimeOnly"("io.jsonwebtoken:jjwt-jackson:0.12.5")
-        "implementation"("com.fasterxml.jackson.core:jackson-databind")
+        "implementation"("org.springframework.boot:spring-boot-starter-json:3.2.5")
         "compileOnly"("org.projectlombok:lombok:1.18.32")
         "annotationProcessor"("org.projectlombok:lombok:1.18.32")
         "testImplementation"("org.springframework.boot:spring-boot-starter-test:3.2.5")
+        "testImplementation"("jakarta.servlet:jakarta.servlet-api:6.0.0")
     }
 }
 

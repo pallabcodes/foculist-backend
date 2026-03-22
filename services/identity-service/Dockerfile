@@ -2,7 +2,8 @@
 FROM gradle:8.7-jdk21 AS build
 WORKDIR /home/gradle/src
 COPY --chown=gradle:gradle . .
-RUN ./gradlew :services:identity-service:bootJar --no-daemon
+RUN --mount=type=cache,target=/home/gradle/.gradle \
+    ./gradlew :services:identity-service:bootJar --no-daemon
 
 # Run stage
 FROM eclipse-temurin:21-jre

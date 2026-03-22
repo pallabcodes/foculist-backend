@@ -2,7 +2,7 @@ package com.yourorg.platform.foculist.gateway.infrastructure.web;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Mono;
 import java.util.Map;
@@ -10,7 +10,7 @@ import java.util.Map;
 @RestController
 public class GatewayFallbackController {
 
-    @GetMapping("/fallback")
+    @RequestMapping("/fallback")
     public Mono<ResponseEntity<Map<String, String>>> defaultFallback() {
         return Mono.just(ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
                 .body(Map.of(
@@ -20,7 +20,7 @@ public class GatewayFallbackController {
                 )));
     }
 
-    @GetMapping("/fallback/identity")
+    @RequestMapping("/fallback/identity")
     public Mono<ResponseEntity<Map<String, String>>> identityFallback() {
         return Mono.just(ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
                 .body(Map.of(

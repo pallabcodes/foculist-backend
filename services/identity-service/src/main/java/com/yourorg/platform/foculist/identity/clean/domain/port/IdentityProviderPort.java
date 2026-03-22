@@ -54,4 +54,14 @@ public interface IdentityProviderPort {
      * @param newPassword The new desired password.
      */
     void confirmForgotPassword(String email, String confirmationCode, String newPassword);
+
+    /**
+     * Changes the password of a logged-in user.
+     *
+     * @param email The user's email address.
+     * @param accessToken The user's active access token.
+     * @param oldPassword The user's current password.
+     * @param newPassword The user's new desired password.
+     */
+    void changePassword(String email, String accessToken, String oldPassword, String newPassword);
 }

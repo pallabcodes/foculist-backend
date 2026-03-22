@@ -29,12 +29,8 @@ public class MeetingApplicationService {
     private final Clock clock;
 
     public MeetingApplicationService(MeetingSummaryRepositoryPort summaryRepository) {
-        this(summaryRepository, Clock.systemUTC());
-    }
-
-    MeetingApplicationService(MeetingSummaryRepositoryPort summaryRepository, Clock clock) {
         this.summaryRepository = summaryRepository;
-        this.clock = clock;
+        this.clock = Clock.systemUTC();
     }
 
     @Transactional(readOnly = true)

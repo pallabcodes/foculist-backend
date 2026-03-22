@@ -30,19 +30,10 @@ public class ResourceApplicationService {
             WorklogEntryRepositoryPort worklogEntryRepository,
             VaultItemRepositoryPort vaultItemRepository
     ) {
-        this(bookmarkRepository, worklogEntryRepository, vaultItemRepository, Clock.systemUTC());
-    }
-
-    ResourceApplicationService(
-            BookmarkRepositoryPort bookmarkRepository,
-            WorklogEntryRepositoryPort worklogEntryRepository,
-            VaultItemRepositoryPort vaultItemRepository,
-            Clock clock
-    ) {
         this.bookmarkRepository = bookmarkRepository;
         this.worklogEntryRepository = worklogEntryRepository;
         this.vaultItemRepository = vaultItemRepository;
-        this.clock = clock;
+        this.clock = Clock.systemUTC();
     }
 
     @Transactional(readOnly = true)

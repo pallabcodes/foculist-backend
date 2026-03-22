@@ -36,10 +36,18 @@ services:
     environment:
       KC_BOOTSTRAP_ADMIN_USERNAME: admin
       KC_BOOTSTRAP_ADMIN_PASSWORD: admin
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
     ports:
       - "9090:8080"
     volumes:
       - ./keycloak-init:/opt/keycloak/data/import
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+        reservations:
+          memory: 512M
 
   # Applications
   gateway-bff:
@@ -47,16 +55,26 @@ services:
       context: .
       dockerfile: services/gateway-bff/Dockerfile
     environment:
-      SPRING_PROFILES_ACTIVE: docker
+      SPRING_PROFILES_ACTIVE: docker,local
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/foculist
       SPRING_DATASOURCE_USERNAME: foculist
       SPRING_DATASOURCE_PASSWORD: foculist-secret-password
       SPRING_DATA_REDIS_HOST: redis
-      APP_IDENTITY_URL: http://identity-service:8081
-      IDENTITY_BASE_URL: http://identity-service:8081
-      PROJECT_BASE_URL: http://project-service:8082
-      PLANNING_BASE_URL: http://planning-service:8083
-      SYNC_BASE_URL: http://sync-service:8086
+      APP_GATEWAY_DOWNSTREAM_IDENTITY: http://identity-service:8081
+      APP_GATEWAY_DOWNSTREAM_PROJECT: http://project-service:8082
+      APP_GATEWAY_DOWNSTREAM_PLANNING: http://planning-service:8083
+      APP_GATEWAY_DOWNSTREAM_CALENDAR: http://calendar-service:8084
+      APP_GATEWAY_DOWNSTREAM_MEETING: http://meeting-service:8085
+      APP_GATEWAY_DOWNSTREAM_SYNC: http://sync-service:8086
+      APP_GATEWAY_DOWNSTREAM_RESOURCE: http://resource-service:8087
+      OTEL_TRACES_EXPORTER: otlp
+      OTEL_METRICS_EXPORTER: otlp
+      OTEL_LOGS_EXPORTER: otlp
+      OTEL_EXPORTER_OTLP_PROTOCOL: http/protobuf
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4318
+      MANAGEMENT_OTLP_TRACING_ENDPOINT: http://otel-collector:4318/v1/traces
+      JWT_ISSUER_URI: http://keycloak:8080/realms/foculist
+      IDENTITY_PROVIDER: keycloak
     ports:
       - "8080:8080"
     depends_on:
@@ -70,14 +88,26 @@ services:
       context: .
       dockerfile: services/identity-service/Dockerfile
     environment:
-      SPRING_PROFILES_ACTIVE: docker
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/foculist
+      SPRING_PROFILES_ACTIVE: docker,local
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/foculist?currentSchema=identity
       SPRING_DATASOURCE_USERNAME: foculist
       SPRING_DATASOURCE_PASSWORD: foculist-secret-password
+      SPRING_FLYWAY_BASELINE_ON_MIGRATE: "true"
+      SPRING_FLYWAY_DEFAULT_SCHEMA: identity
       SPRING_DATA_REDIS_HOST: redis
-      OTEL_TRACES_EXPORTER: none
-      OTEL_METRICS_EXPORTER: none
+      KEYCLOAK_SERVER_URL: http://keycloak:8080
+      KEYCLOAK_REALM: foculist
+      KEYCLOAK_CLIENT_ID: foculist-local-client
+      KEYCLOAK_CLIENT_SECRET: foculist-dev-secret-that-is-long
+      OTEL_TRACES_EXPORTER: otlp
+      OTEL_METRICS_EXPORTER: otlp
+      OTEL_LOGS_EXPORTER: otlp
+      OTEL_EXPORTER_OTLP_PROTOCOL: http/protobuf
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4318
+      MANAGEMENT_OTLP_TRACING_ENDPOINT: http://otel-collector:4318/v1/traces
+      IDENTITY_PROVIDER: keycloak
       MONGODB_URI: mongodb://mongodb:27017/foculist_identity-service
+      SPRING_RABBITMQ_HOST: rabbitmq
     ports:
       - "8081:8081"
     depends_on:
@@ -87,20 +117,26 @@ services:
         condition: service_started
       redis:
         condition: service_started
+      rabbitmq:
+        condition: service_started
 
   planning-service:
     build:
       context: .
       dockerfile: services/planning-service/Dockerfile
     environment:
-      SPRING_PROFILES_ACTIVE: docker
+      SPRING_PROFILES_ACTIVE: docker,local
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/foculist
       SPRING_DATASOURCE_USERNAME: foculist
       SPRING_DATASOURCE_PASSWORD: foculist-secret-password
       SPRING_RABBITMQ_HOST: rabbitmq
       SPRING_DATA_REDIS_HOST: redis
-      OTEL_TRACES_EXPORTER: none
-      OTEL_METRICS_EXPORTER: none
+      OTEL_TRACES_EXPORTER: otlp
+      OTEL_METRICS_EXPORTER: otlp
+      OTEL_LOGS_EXPORTER: otlp
+      OTEL_EXPORTER_OTLP_PROTOCOL: http/protobuf
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4318
+      MANAGEMENT_OTLP_TRACING_ENDPOINT: http://otel-collector:4318/v1/traces
       MONGODB_URI: mongodb://mongodb:27017/foculist_planning-service
     ports:
       - "8083:8083"
@@ -119,14 +155,19 @@ services:
       context: .
       dockerfile: services/project-service/Dockerfile
     environment:
-      SPRING_PROFILES_ACTIVE: docker
+      SPRING_PROFILES_ACTIVE: docker,local
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/foculist
       SPRING_DATASOURCE_USERNAME: foculist
       SPRING_DATASOURCE_PASSWORD: foculist-secret-password
       SPRING_DATA_REDIS_HOST: redis
-      OTEL_TRACES_EXPORTER: none
-      OTEL_METRICS_EXPORTER: none
+      OTEL_TRACES_EXPORTER: otlp
+      OTEL_METRICS_EXPORTER: otlp
+      OTEL_LOGS_EXPORTER: otlp
+      OTEL_EXPORTER_OTLP_PROTOCOL: http/protobuf
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4318
+      MANAGEMENT_OTLP_TRACING_ENDPOINT: http://otel-collector:4318/v1/traces
       MONGODB_URI: mongodb://mongodb:27017/foculist_project-service
+      SPRING_RABBITMQ_HOST: rabbitmq
     ports:
       - "8082:8082"
     depends_on:
@@ -136,17 +177,25 @@ services:
         condition: service_started
       redis:
         condition: service_started
+      rabbitmq:
+        condition: service_started
 
   sync-service:
     build:
       context: .
       dockerfile: services/sync-service/Dockerfile
     environment:
-      SPRING_PROFILES_ACTIVE: docker
+      SPRING_PROFILES_ACTIVE: docker,local
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/foculist
       SPRING_DATASOURCE_USERNAME: foculist
       SPRING_DATASOURCE_PASSWORD: foculist-secret-password
       SPRING_DATA_REDIS_HOST: redis
+      OTEL_TRACES_EXPORTER: otlp
+      OTEL_METRICS_EXPORTER: otlp
+      OTEL_LOGS_EXPORTER: otlp
+      OTEL_EXPORTER_OTLP_PROTOCOL: http/protobuf
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4318
+      MANAGEMENT_OTLP_TRACING_ENDPOINT: http://otel-collector:4318/v1/traces
     ports:
       - "8086:8086"
     depends_on:
@@ -154,3 +203,138 @@ services:
         condition: service_healthy
       redis:
         condition: service_started
+
+  calendar-service:
+    build:
+      context: .
+      dockerfile: services/calendar-service/Dockerfile
+    environment:
+      SPRING_PROFILES_ACTIVE: docker,local
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/foculist?currentSchema=calendar
+      SPRING_DATASOURCE_USERNAME: foculist
+      SPRING_DATASOURCE_PASSWORD: foculist-secret-password
+      SPRING_FLYWAY_SCHEMAS: calendar
+      SPRING_FLYWAY_CREATE_SCHEMAS: "true"
+      SPRING_FLYWAY_BASELINE_ON_MIGRATE: "true"
+      SPRING_DATA_REDIS_HOST: redis
+      OTEL_TRACES_EXPORTER: otlp
+      OTEL_METRICS_EXPORTER: otlp
+      OTEL_LOGS_EXPORTER: otlp
+      OTEL_EXPORTER_OTLP_PROTOCOL: http/protobuf
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4318
+      MANAGEMENT_OTLP_TRACING_ENDPOINT: http://otel-collector:4318/v1/traces
+      MONGODB_URI: mongodb://mongodb:27017/foculist_calendar-service
+    ports:
+      - "8084:8084"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      mongodb:
+        condition: service_started
+      redis:
+        condition: service_started
+
+  meeting-service:
+    build:
+      context: .
+      dockerfile: services/meeting-service/Dockerfile
+    environment:
+      SPRING_PROFILES_ACTIVE: docker,local
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/foculist?currentSchema=meeting
+      SPRING_DATASOURCE_USERNAME: foculist
+      SPRING_DATASOURCE_PASSWORD: foculist-secret-password
+      SPRING_FLYWAY_SCHEMAS: meeting
+      SPRING_FLYWAY_CREATE_SCHEMAS: "true"
+      SPRING_FLYWAY_BASELINE_ON_MIGRATE: "true"
+      SPRING_DATA_REDIS_HOST: redis
+      OTEL_TRACES_EXPORTER: otlp
+      OTEL_METRICS_EXPORTER: otlp
+      OTEL_LOGS_EXPORTER: otlp
+      OTEL_EXPORTER_OTLP_PROTOCOL: http/protobuf
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4318
+      MANAGEMENT_OTLP_TRACING_ENDPOINT: http://otel-collector:4318/v1/traces
+      MONGODB_URI: mongodb://mongodb:27017/foculist_meeting-service
+    ports:
+      - "8085:8085"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      mongodb:
+        condition: service_started
+      redis:
+        condition: service_started
+
+  resource-service:
+    build:
+      context: .
+      dockerfile: services/resource-service/Dockerfile
+    environment:
+      SPRING_PROFILES_ACTIVE: docker,local
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/foculist?currentSchema=resource
+      SPRING_DATASOURCE_USERNAME: foculist
+      SPRING_DATASOURCE_PASSWORD: foculist-secret-password
+      SPRING_FLYWAY_SCHEMAS: resource
+      SPRING_FLYWAY_CREATE_SCHEMAS: "true"
+      SPRING_FLYWAY_BASELINE_ON_MIGRATE: "true"
+      SPRING_DATA_REDIS_HOST: redis
+      OTEL_TRACES_EXPORTER: otlp
+      OTEL_METRICS_EXPORTER: otlp
+      OTEL_LOGS_EXPORTER: otlp
+      OTEL_EXPORTER_OTLP_PROTOCOL: http/protobuf
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4318
+      MANAGEMENT_OTLP_TRACING_ENDPOINT: http://otel-collector:4318/v1/traces
+      MONGODB_URI: mongodb://mongodb:27017/foculist_resource-service
+    ports:
+      - "8087:8087"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      mongodb:
+        condition: service_started
+      redis:
+        condition: service_started
+
+  # Observability Stack
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.96.0
+    volumes:
+      - ./platform/otel/otel-collector-config.yml:/etc/otel-collector-config.yaml
+    command: ["--config=/etc/otel-collector-config.yaml"]
+    ports:
+      - "4317:4317" # OTLP gRPC
+      - "4318:4318" # OTLP HTTP
+      - "9464:9464" # Prometheus exporter
+    depends_on:
+      - jaeger
+      - loki
+
+  jaeger:
+    image: jaegertracing/all-in-one:1.55
+    ports:
+      - "16686:16686" # Web UI
+      - "4317"       # OTLP gRPC receiver (internal)
+
+  prometheus:
+    image: prom/prometheus:v2.50.1
+    volumes:
+      - ./platform/otel/prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - "9091:9090"
+    depends_on:
+      - otel-collector
+
+  loki:
+    image: grafana/loki:2.9.4
+    command: -config.file=/etc/loki/local-config.yaml
+    ports:
+      - "3100:3100"
+
+  grafana:
+    image: grafana/grafana:10.4.1
+    volumes:
+      - ./platform/otel/grafana/provisioning:/etc/grafana/provisioning
+    ports:
+      - "3000:3000"
+    depends_on:
+      - prometheus
+      - loki

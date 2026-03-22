@@ -10,8 +10,11 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import java.util.List;
 import java.util.UUID;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -24,13 +27,10 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/v1/projects")
+@RequiredArgsConstructor
 @Validated
 public class ProjectController {
     private final ProjectApplicationService projectApplicationService;
-
-    public ProjectController(ProjectApplicationService projectApplicationService) {
-        this.projectApplicationService = projectApplicationService;
-    }
 
     @GetMapping
     public List<ProjectSummaryView> listProjects(
@@ -43,7 +43,12 @@ public class ProjectController {
     }
 
     @PostMapping
-    public ResponseEntity<ProjectSummaryView> createProject(@Valid @RequestBody CreateProjectRequest request) {
+    public ResponseEntity<ProjectSummaryView> createProject(
+            @Valid @RequestBody CreateProjectRequest request,
+            @AuthenticationPrincipal Jwt jwt
+    ) {
+        UUID userId = UUID.fromString(jwt.getClaimAsString("userId"));
+
         ProjectSummaryView created = projectApplicationService.createProject(
                 TenantContext.require(),
                 new CreateProjectCommand(
@@ -51,7 +56,10 @@ public class ProjectController {
                         request.description(),
                         request.status(),
                         request.priority(),
-                        request.dueDate()
+                        request.dueDate(),
+                        request.ownerId() != null ? request.ownerId() : userId,
+                        request.key() != null ? request.key() : "PROJ",
+                        request.permissionSchemeId()
                 )
         );
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
@@ -74,7 +82,10 @@ public class ProjectController {
             String description,
             String status,
             String priority,
-            String dueDate
+            String dueDate,
+            String key,
+            UUID ownerId,
+            UUID permissionSchemeId
     ) {
     }
 

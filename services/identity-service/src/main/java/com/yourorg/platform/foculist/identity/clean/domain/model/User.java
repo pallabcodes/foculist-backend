@@ -48,14 +48,24 @@ public class User {
     @Column(name = "is_active")
     private boolean isActive = true;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "global_role", length = 20)
-    private String globalRole = "USER";
+    private GlobalRole globalRole = GlobalRole.USER;
 
     @Column(name = "created_by")
     private String createdBy;
 
     @Column(name = "updated_by")
     private String updatedBy;
+
+    @Column(name = "mfa_session_token")
+    private String mfaSessionToken;
+
+    @Column(name = "mfa_code", length = 10)
+    private String mfaCode;
+
+    @Column(name = "mfa_expires_at")
+    private OffsetDateTime mfaExpiresAt;
 
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "jsonb")

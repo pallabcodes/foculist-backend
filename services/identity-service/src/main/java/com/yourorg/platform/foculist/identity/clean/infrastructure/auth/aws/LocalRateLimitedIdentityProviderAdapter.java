@@ -75,4 +75,9 @@ public class LocalRateLimitedIdentityProviderAdapter implements IdentityProvider
     public void confirmForgotPassword(String email, String confirmationCode, String newPassword) {
         enforceLimit(() -> delegate.confirmForgotPassword(email, confirmationCode, newPassword));
     }
+
+    @Override
+    public void changePassword(String email, String accessToken, String oldPassword, String newPassword) {
+        enforceLimit(() -> delegate.changePassword(email, accessToken, oldPassword, newPassword));
+    }
 }

@@ -64,7 +64,7 @@ public class DataInitializer implements CommandLineRunner {
         // ============================================================
         // PHASE 2: USERS (6 users covering all L5 archetypes)
         // ============================================================
-        User admin = createUser("admin@foculist.com", "Platform Administrator", "admin123", "public", "ADMIN");
+        User admin = createUser("admin@foculist.com", "Platform Administrator", "admin123", "public", "PLATFORM_ADMIN");
         User lead = createUser("lead@apollo.team", "Commander Rover", "apollo123", "apollo-team", "USER");
         User dev1 = createUser("dev1@apollo.team", "Elena Vasquez", "apollo123", "apollo-team", "USER");
         User dev2 = createUser("dev2@apollo.team", "Kai Nakamura", "apollo123", "apollo-team", "USER");
@@ -315,7 +315,7 @@ public class DataInitializer implements CommandLineRunner {
         user.setFullName(fullName);
         user.setPasswordHash(passwordEncoder.encode(password));
         user.setTenantId(tenantId);
-        user.setGlobalRole(globalRole);
+        user.setGlobalRole(com.yourorg.platform.foculist.identity.clean.domain.model.GlobalRole.valueOf(globalRole));
         user.setCreatedBy("system-bootstrap");
         user.setMetadata(Map.of("onboarded", true));
         return userRepository.save(user);

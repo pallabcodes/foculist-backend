@@ -27,9 +27,14 @@ public class GlobalResponseAdvice implements ResponseBodyAdvice<Object> {
 
     @Override
     public boolean supports(MethodParameter returnType, Class<? extends HttpMessageConverter<?>> converterType) {
-        // Skip wrapping if it's already an ApiResponse or a raw String (to avoid ClassCastException in some converters)
-        Class<?> parameterType = returnType.getParameterType();
-        if (ApiResponse.class.isAssignableFrom(parameterType) || String.class.isAssignableFrom(parameterType)) {
+        // Skip wrapping if it's already an ApiResponse
+        if (ApiResponse.class.isAssignableFrom(returnType.getParameterType())) {
+            return false;
+        }
+
+        // CRITICAL: Skip wrapping if the converter is StringHttpMessageConverter
+        // This avoids ClassCastException when Spring expects a raw String for the body
+        if (org.springframework.http.converter.StringHttpMessageConverter.class.isAssignableFrom(converterType)) {
             return false;
         }
 
@@ -71,6 +76,65 @@ public class GlobalResponseAdvice implements ResponseBodyAdvice<Object> {
         if (!activeProfile.toLowerCase().contains("prod")) {
             // Placeholder for trace ID if we had Sleuth/Brave/OTel tracer bean access here
             metadata.setTraceId("TODO-Trace-ID");
+        }
+
+        // Handle Spring Boot's DefaultErrorAttributes map explicitly
+        if (body instanceof java.util.Map mapBody) {
+            if (mapBody.containsKey("status") && mapBody.containsKey("error")) {
+                Integer status = (Integer) mapBody.get("status");
+                String errorType = (String) mapBody.get("error");
+                String message = (String) mapBody.get("message");
+                String path = (String) mapBody.get("path");
+                
+                java.util.List<ApiResponse.ApiErrorDetail> errorDetails = new java.util.ArrayList<>();
+                
+                // Extract Spring validation errors if explicitly exposed
+                if (mapBody.containsKey("errors") && mapBody.get("errors") instanceof java.util.List) {
+                    java.util.List<?> validationErrors = (java.util.List<?>) mapBody.get("errors");
+                    for (Object err : validationErrors) {
+                        if (err instanceof org.springframework.validation.FieldError ferr) {
+                            errorDetails.add(ApiResponse.ApiErrorDetail.builder()
+                                    .field(ferr.getField())
+                                    .reason(ferr.getCode())
+                                    .message(ferr.getDefaultMessage())
+                                    .build());
+                        } else if (err instanceof java.util.Map verr) {
+                            // Fallback for serialized maps
+                            errorDetails.add(ApiResponse.ApiErrorDetail.builder()
+                                    .field((String) verr.get("field"))
+                                    .reason((String) verr.get("code"))
+                                    .message((String) verr.get("defaultMessage"))
+                                    .build());
+                        }
+                    }
+                }
+                
+                // Fallback to path if no validation fields were extracted
+                if (errorDetails.isEmpty() && path != null) {
+                    errorDetails.add(ApiResponse.ApiErrorDetail.builder()
+                            .field("path")
+                            .message(path)
+                            .build());
+                }
+
+                // Sanitize internal Spring exception messages
+                String finalMessage = message != null && !message.isBlank() ? message : errorType;
+                if (finalMessage.startsWith("Validation failed for object")) {
+                    finalMessage = "Invalid request parameters";
+                }
+
+                ApiResponse.ApiError error = ApiResponse.ApiError.builder()
+                        .code("HTTP_" + status)
+                        .message(finalMessage)
+                        .details(errorDetails)
+                        .build();
+
+                return ApiResponse.builder()
+                        .apiVersion("v1")
+                        .error(error)
+                        .metadata(metadata)
+                        .build();
+            }
         }
 
         return ApiResponse.builder()

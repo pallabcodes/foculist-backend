@@ -46,16 +46,18 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
             newUser.setEmail(email);
             newUser.setFullName(name);
             newUser.setActive(true);
-            newUser.setGlobalRole("USER");
+            newUser.setGlobalRole(com.yourorg.platform.foculist.identity.clean.domain.model.GlobalRole.USER);
             return userRepository.save(newUser);
         });
 
         String tenantId = TenantContext.require();
         Map<String, Object> claims = new LinkedHashMap<>();
         claims.put("userId", user.getId().toString());
-        claims.put("role", StringUtils.hasText(user.getGlobalRole()) ? user.getGlobalRole() : "USER");
+        claims.put("role", user.getGlobalRole() != null ? user.getGlobalRole().name() : "USER");
         claims.put("tenant", tenantId);
-        String token = jwtService.generateAccessToken(user.getEmail(), claims);
+        
+        String jti = java.util.UUID.randomUUID().toString();
+        String token = jwtService.generateAccessToken(user.getEmail(), claims, jti);
 
         String targetUrl = UriComponentsBuilder.fromUriString(successRedirectUrl)
                 .queryParam("token", token)

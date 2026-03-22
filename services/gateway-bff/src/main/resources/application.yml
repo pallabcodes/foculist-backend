@@ -12,30 +12,46 @@ spring:
           predicates:
             - Path=/api/identity/**
           filters:
-            - RewritePath=/api/identity/(?<segment>.*), /$\\{segment}
+            - name: CircuitBreaker
+              args:
+                name: identityService
+                fallbackUri: forward:/fallback/identity
+            - RewritePath=/api/identity/(?<segment>.*), /${segment}
         - id: project-service
           uri: ${app.gateway.downstream.project}
           predicates:
             - Path=/api/project/**
           filters:
-            - RewritePath=/api/project/(?<segment>.*), /$\\{segment}
+            - name: CircuitBreaker
+              args:
+                name: projectService
+                fallbackUri: forward:/fallback/project
+            - RewritePath=/api/project/(?<segment>.*), /${segment}
         - id: planning-service
           uri: ${app.gateway.downstream.planning}
           predicates:
             - Path=/api/planning/**
           filters:
-            - RewritePath=/api/planning/(?<segment>.*), /$\\{segment}
+            - name: CircuitBreaker
+              args:
+                name: planningService
+                fallbackUri: forward:/fallback/planning
+            - RewritePath=/api/planning/(?<segment>.*), /${segment}
         - id: sync-service
           uri: ${app.gateway.downstream.sync}
           predicates:
             - Path=/api/sync/**
           filters:
-            - RewritePath=/api/sync/(?<segment>.*), /$\\{segment}
+            - name: CircuitBreaker
+              args:
+                name: syncService
+                fallbackUri: forward:/fallback/sync
+            - RewritePath=/api/sync/(?<segment>.*), /${segment}
 
 grpc:
   client:
     identity-service:
-      address: "static://localhost:9090"
+      address: "static://identity-service:9090"
       negotiationType: plaintext
   security:
     oauth2:
@@ -69,6 +85,7 @@ management:
 logging:
   level:
     org.springframework.cloud.gateway: DEBUG
+    org.springframework.security: DEBUG
   pattern:
     level: "%5p [${spring.application.name},%X{traceId:-},%X{spanId:-},%X{tenantId:-}]"
 
@@ -118,9 +135,16 @@ springdoc:
         url: /api/project/v3/api-docs
       - name: Sync Service
         url: /api/sync/v3/api-docs
+      - name: Calendar Service
+        url: /api/calendar/v3/api-docs
+      - name: Meeting Service
+        url: /api/meetings/v3/api-docs
+      - name: Resource Service
+        url: /api/resources/v3/api-docs
 
 server:
   port: 8080
+  forward-headers-strategy: framework
 
 resilience4j:
   circuitbreaker:
@@ -140,4 +164,10 @@ resilience4j:
       planningService:
         baseConfig: default
       syncService:
+        baseConfig: default
+      calendarService:
+        baseConfig: default
+      meetingService:
+        baseConfig: default
+      resourceService:
         baseConfig: default

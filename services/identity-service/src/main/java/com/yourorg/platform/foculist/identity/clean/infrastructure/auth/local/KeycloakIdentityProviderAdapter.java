@@ -72,6 +72,7 @@ public class KeycloakIdentityProviderAdapter implements IdentityProviderPort {
         if (attributes.containsKey("name")) {
             userRepresentation.put("firstName", attributes.get("name"));
         }
+        userRepresentation.put("requiredActions", new String[0]);
 
         Map<String, Object> credential = new HashMap<>();
         credential.put("type", "password");
@@ -101,9 +102,9 @@ public class KeycloakIdentityProviderAdapter implements IdentityProviderPort {
                 throw new RuntimeException("Failed to create user in Keycloak: " + response.getStatusCode());
             }
         } catch (Exception e) {
-            // Because Keycloak might conflict on existing email, we catch and return a fake ID if testing locally
             log.error("Failed to register user to Keycloak", e);
-            throw new RuntimeException("Failed to register user in local Keycloak", e);
+            throw new org.springframework.web.server.ResponseStatusException(
+                org.springframework.http.HttpStatus.BAD_REQUEST, "Failed to register user in identity provider", e);
         }
     }
 
@@ -134,19 +135,15 @@ public class KeycloakIdentityProviderAdapter implements IdentityProviderPort {
                     "expiresIn", String.valueOf(resMap.get("expires_in"))
             );
         } catch (Exception e) {
-            log.warn("Failed to authenticate with Keycloak, falling back to mock local token for testing: {}", e.getMessage());
-            return Map.of(
-                    "accessToken", "mock-access-token",
-                    "idToken", "mock-id-token",
-                    "refreshToken", "mock-refresh-token",
-                    "expiresIn", "3600"
-            );
+            log.error("Failed to authenticate with Keycloak: {}", e.getMessage());
+            throw new org.springframework.web.server.ResponseStatusException(
+                org.springframework.http.HttpStatus.UNAUTHORIZED, "Invalid credentials or identity provider unreachable", e);
         }
     }
 
     @Override
     public void confirmUser(String email, String confirmationCode) {
-        log.info("Local Keycloak: Auto-confirming user for offline dev");
+        log.info("confirmUser not strictly required for keycloak password-based flow yet.");
     }
 
     @Override
@@ -180,11 +177,63 @@ public class KeycloakIdentityProviderAdapter implements IdentityProviderPort {
 
     @Override
     public void forgotPassword(String email) {
-        log.info("Local Keycloak: Forgot password triggered for {}", email);
+        log.info("ForgotPassword flow triggered for {}", email);
+        // Implement real Keycloak forgot password via Admin REST API if required
     }
 
     @Override
     public void confirmForgotPassword(String email, String confirmationCode, String newPassword) {
-        log.info("Local Keycloak: Resetting password for offline dev");
+        log.info("ConfirmForgotPassword flow triggered");
+        // Implement real Keycloak confirm password via Admin REST API if required
+    }
+
+    @Override
+    public void changePassword(String email, String accessToken, String oldPassword, String newPassword) {
+        // 1. Verify old password first
+        try {
+            authenticate(email, oldPassword);
+        } catch (Exception e) {
+            throw new org.springframework.web.server.ResponseStatusException(
+                    org.springframework.http.HttpStatus.UNAUTHORIZED, "Current password verification failed");
+        }
+
+        // 2. Get Admin token and lookup user
+        try {
+            String adminToken = getAdminToken();
+            String searchUrl = String.format("%s/admin/realms/%s/users?email=%s", serverUrl, realm, email);
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.setBearerAuth(adminToken);
+            org.springframework.http.HttpEntity<Void> request = new org.springframework.http.HttpEntity<>(headers);
+
+            ResponseEntity<String> response = restTemplate.exchange(
+                    searchUrl, org.springframework.http.HttpMethod.GET, request, String.class);
+
+            java.util.List<Map<String, Object>> users = mapper.readValue(
+                    response.getBody(), new TypeReference<>() {});
+
+            if (users.isEmpty()) {
+                throw new RuntimeException("User not found in Keycloak for email: " + email);
+            }
+
+            String userId = (String) users.get(0).get("id");
+            String resetUrl = String.format("%s/admin/realms/%s/users/%s/reset-password", serverUrl, realm, userId);
+
+            // 3. Reset password
+            Map<String, Object> credential = new HashMap<>();
+            credential.put("type", "password");
+            credential.put("value", newPassword);
+            credential.put("temporary", false);
+
+            org.springframework.http.HttpEntity<Map<String, Object>> resetRequest = new org.springframework.http.HttpEntity<>(credential, headers);
+            restTemplate.exchange(resetUrl, org.springframework.http.HttpMethod.PUT, resetRequest, Void.class);
+
+            log.info("Password successfully updated for user {} inside Keycloak", email);
+
+        } catch (Exception e) {
+            log.error("Failed to update password in Keycloak for {}", email, e);
+            throw new org.springframework.web.server.ResponseStatusException(
+                org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, "Failed to update password in identity provider", e);
+        }
     }
 }

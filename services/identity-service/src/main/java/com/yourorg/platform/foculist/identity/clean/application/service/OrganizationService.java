@@ -25,7 +25,7 @@ public class OrganizationService {
     private final UserRepository userRepository;
 
     @Transactional
-    public Organization createOrganization(String name, String slug, UUID ownerId) {
+    public Organization createOrganization(String name, String slug, UUID ownerId, java.util.Map<String, Object> metadata) {
         // Owner is retrieved from the context they are currently in (e.g. 'public' upon signup)
         String currentTenant = TenantContext.require();
         User owner = userRepository.findByIdAndTenantId(ownerId, currentTenant)
@@ -36,10 +36,14 @@ public class OrganizationService {
         org.setName(name);
         org.setSlug(slug);
         org.setTier("SOLO");
+        if (metadata != null) {
+            org.setMetadata(metadata);
+        }
         org = organizationRepository.save(org);
+        String realTenantId = org.getId().toString();
 
         Membership membership = new Membership();
-        membership.setTenantId(slug);
+        membership.setTenantId(realTenantId);
         membership.setOrganization(org);
         membership.setUser(owner);
         membership.setRole(MembershipRole.OWNER);

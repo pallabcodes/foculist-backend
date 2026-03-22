@@ -2,9 +2,8 @@ package com.yourorg.platform.foculist.project.domain.model;
 
 import java.time.Instant;
 import java.time.LocalDate;
-import java.util.UUID;
-
 import java.util.Map;
+import java.util.UUID;
 
 public record Project(
         UUID id,
@@ -14,6 +13,9 @@ public record Project(
         ProjectStatus status,
         ProjectPriority priority,
         LocalDate dueDate,
+        UUID ownerId,
+        String key,
+        UUID permissionSchemeId,
         Instant createdAt,
         Instant updatedAt,
         String createdBy,
@@ -61,6 +63,9 @@ public record Project(
             ProjectStatus status,
             ProjectPriority priority,
             LocalDate dueDate,
+            UUID ownerId,
+            String key,
+            UUID permissionSchemeId,
             Instant now,
             String createdBy
     ) {
@@ -73,12 +78,15 @@ public record Project(
                 status == null ? ProjectStatus.RUNNING : status,
                 priority == null ? ProjectPriority.MEDIUM : priority,
                 dueDate,
+                ownerId,
+                key,
+                permissionSchemeId != null ? permissionSchemeId : UUID.fromString("d0000000-0000-0000-0000-000000000001"), // Default Scheme
                 timestamp,
                 timestamp,
                 createdBy,
                 null,
                 null,
-                null,
+                Map.of(),
                 0L
         );
     }

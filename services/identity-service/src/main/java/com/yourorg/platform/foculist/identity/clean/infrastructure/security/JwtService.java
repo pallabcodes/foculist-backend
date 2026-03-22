@@ -23,21 +23,25 @@ public class JwtService {
     @Value("${app.security.jwt.refresh-expiration:2592000000}")
     private long refreshTokenExpiration;
 
-    public String generateAccessToken(String username, Map<String, Object> extraClaims) {
-        return buildToken(extraClaims, username, accessTokenExpiration);
+    public long getAccessTokenExpiration() {
+        return accessTokenExpiration;
     }
 
-    public String generateRefreshToken(String username, Map<String, Object> extraClaims) {
-        return buildToken(extraClaims, username, refreshTokenExpiration);
+    public String generateAccessToken(String username, Map<String, Object> extraClaims, String jti) {
+        return buildToken(extraClaims, username, accessTokenExpiration, jti);
     }
 
-    public String generateToken(String username, Map<String, Object> extraClaims) {
-        return generateAccessToken(username, extraClaims);
+    public String generateRefreshToken(String username, Map<String, Object> extraClaims, String jti) {
+        return buildToken(extraClaims, username, refreshTokenExpiration, jti);
     }
 
-    private String buildToken(Map<String, Object> extraClaims, String subject, long expiration) {
+    public String generateToken(String username, Map<String, Object> extraClaims, String jti) {
+        return generateAccessToken(username, extraClaims, jti);
+    }
+
+    private String buildToken(Map<String, Object> extraClaims, String subject, long expiration, String jti) {
         return Jwts.builder()
-                .id(java.util.UUID.randomUUID().toString())
+                .id(jti)
                 .claims(extraClaims)
                 .subject(subject)
                 .issuedAt(new Date(System.currentTimeMillis()))

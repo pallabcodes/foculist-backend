@@ -21,7 +21,7 @@ public class SecurityConfig {
             .csrf(csrf -> csrf.disable()) // Stateless API
             .authorizeExchange(exchanges -> exchanges
                 // Permit actuation, version discovery, swagger, and local Auth
-                .pathMatchers("/actuator/**", "/api/versions", "/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs", "/v3/api-docs/**", "/webjars/swagger-ui/**", "/api/*/v3/api-docs/**", "/api/identity/v1/auth/**", "/api/identity/v1/users/register").permitAll()
+                .pathMatchers("/actuator/**", "/api/versions", "/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs", "/v3/api-docs/**", "/webjars/swagger-ui/**", "/api/*/v3/api-docs/**", "/api/auth/**", "/api/users/register", "/api/user", "/api/identity/**").permitAll()
                 // All other gateway routes require a valid JWT
                 .anyExchange().authenticated()
             )

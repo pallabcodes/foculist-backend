@@ -35,7 +35,7 @@ public class ResourceGrantController {
         return ResponseEntity.ok(hasPerm);
     }
     
-    @PreAuthorize("@RequiresRole('ADMIN')")
+    @PreAuthorize("hasAuthority('SCOPE_member:admin') or @orgSecurity.isPlatformAdmin()")
     @PostMapping
     public ResponseEntity<ResourceGrant> grantPermission(@Valid @RequestBody GrantRequest request) {
         ResourceGrant grant = resourceGrantService.grantPermission(
@@ -48,7 +48,7 @@ public class ResourceGrantController {
         return ResponseEntity.ok(grant);
     }
     
-    @PreAuthorize("@RequiresRole('ADMIN')")
+    @PreAuthorize("hasAuthority('SCOPE_member:admin') or @orgSecurity.isPlatformAdmin()")
     @DeleteMapping
     public ResponseEntity<Void> revokePermission(
             @RequestParam String userId,

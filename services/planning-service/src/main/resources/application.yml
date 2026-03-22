@@ -25,6 +25,13 @@ spring:
 springdoc:
   api-docs:
     path: /v3/api-docs
+    enabled: true
+    servers:
+      - url: /api/planning
+        description: Unified Gateway
+  swagger-ui:
+    path: /swagger-ui.html
+  show-actuator: true
   redis:
     host: ${REDIS_HOST:localhost}
     port: ${REDIS_PORT:6379}
@@ -97,3 +104,4 @@ app:
 
 server:
   port: 8083
+  forward-headers-strategy: framework

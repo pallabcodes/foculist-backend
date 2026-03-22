@@ -54,6 +54,10 @@ public class ProjectApplicationService {
     @Transactional
     public ProjectSummaryView createProject(String tenantId, CreateProjectCommand command) {
         Instant now = Instant.now(clock);
+        
+        // Resolve default permission scheme for the tenant if not specified
+        UUID defaultSchemeId = UUID.fromString("d0000000-0000-0000-0000-000000000001");
+
         Project project = Project.create(
                 tenantId,
                 command.name(),
@@ -61,6 +65,9 @@ public class ProjectApplicationService {
                 ProjectStatus.from(command.status()),
                 ProjectPriority.from(command.priority()),
                 parseDueDate(command.dueDate(), now),
+                command.ownerId(),
+                command.key(),
+                command.permissionSchemeId() != null ? command.permissionSchemeId() : defaultSchemeId,
                 now,
                 "system" // Audit field: createdBy
         );

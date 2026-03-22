@@ -63,13 +63,21 @@ public class IdentityProviderConfiguration {
     }
 
     /**
-     * Local Development Profile (Tier 4 Open Source Mod): The adapter hits the local 
-     * Keycloak Docker container for limitless offline test loops.
+     * Local Development Profile (Tier 4 Open Source Mod / Dev AWS Stub):
+     * Dynamically swaps between Keycloak and LocalStack AWS Cognito based on identity.provider.
      */
     @Bean
     @Profile("local")
-    public IdentityProviderPort localIdentityProvider() {
+    @org.springframework.boot.autoconfigure.condition.ConditionalOnProperty(name = "identity.provider", havingValue = "keycloak", matchIfMissing = true)
+    public IdentityProviderPort localKeycloakIdentityProvider() {
         return new KeycloakIdentityProviderAdapter(keycloakUrl, keycloakRealm, keycloakClientId, keycloakClientSecret);
+    }
+
+    @Bean
+    @Profile("local")
+    @org.springframework.boot.autoconfigure.condition.ConditionalOnProperty(name = "identity.provider", havingValue = "cognito")
+    public IdentityProviderPort localCognitoIdentityProvider(CognitoIdentityProviderClient cognitoClient) {
+        return new AwsCognitoIdentityProviderAdapter(cognitoClient, userPoolId, clientId);
     }
 
     /**

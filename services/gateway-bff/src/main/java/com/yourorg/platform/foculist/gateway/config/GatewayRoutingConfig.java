@@ -30,6 +30,18 @@ public class GatewayRoutingConfig {
                         .path("/api/sync/v3/api-docs")
                         .filters(f -> f.setPath("/v3/api-docs"))
                         .uri(downstream.getSync()))
+                .route("calendar-docs", route -> route
+                        .path("/api/calendar/v3/api-docs")
+                        .filters(f -> f.setPath("/v3/api-docs"))
+                        .uri(downstream.getCalendar()))
+                .route("meeting-docs", route -> route
+                        .path("/api/meetings/v3/api-docs")
+                        .filters(f -> f.setPath("/v3/api-docs"))
+                        .uri(downstream.getMeeting()))
+                .route("resource-docs", route -> route
+                        .path("/api/resources/v3/api-docs")
+                        .filters(f -> f.setPath("/v3/api-docs"))
+                        .uri(downstream.getResource()))
                 // API Routes
                 .route("identity-auth-v2", route -> route
                         .path("/api/auth/**")
@@ -73,19 +85,27 @@ public class GatewayRoutingConfig {
                         .uri(downstream.getPlanning()))
                 .route("calendar", route -> route
                         .path("/api/calendar/**")
-                        .filters(filter -> filter.rewritePath("/api/calendar(?<segment>/?.*)", "/v1/calendar${segment}"))
+                        .filters(filter -> filter
+                                .circuitBreaker(config -> config.setName("calendarService").setFallbackUri("forward:/fallback/calendar"))
+                                .rewritePath("/api/calendar(?<segment>/?.*)", "/v1/calendar${segment}"))
                         .uri(downstream.getCalendar()))
                 .route("meeting", route -> route
                         .path("/api/meetings/**")
-                        .filters(filter -> filter.rewritePath("/api/meetings(?<segment>/?.*)", "/v1/meetings${segment}"))
+                        .filters(filter -> filter
+                                .circuitBreaker(config -> config.setName("meetingService").setFallbackUri("forward:/fallback/meeting"))
+                                .rewritePath("/api/meetings(?<segment>/?.*)", "/v1/meetings${segment}"))
                         .uri(downstream.getMeeting()))
                 .route("sync", route -> route
                         .path("/api/sync/**")
-                        .filters(filter -> filter.rewritePath("/api/sync(?<segment>/?.*)", "/v1/sync${segment}"))
+                        .filters(filter -> filter
+                                .circuitBreaker(config -> config.setName("syncService").setFallbackUri("forward:/fallback/sync"))
+                                .rewritePath("/api/sync(?<segment>/?.*)", "/v1/sync${segment}"))
                         .uri(downstream.getSync()))
                 .route("resource", route -> route
                         .path("/api/resources/**")
-                        .filters(filter -> filter.rewritePath("/api/resources(?<segment>/?.*)", "/v1${segment}"))
+                        .filters(filter -> filter
+                                .circuitBreaker(config -> config.setName("resourceService").setFallbackUri("forward:/fallback/resource"))
+                                .rewritePath("/api/resources(?<segment>/?.*)", "/v1${segment}"))
                         .uri(downstream.getResource()))
                 .build();
     }

@@ -113,4 +113,14 @@ public class AwsCognitoIdentityProviderAdapter implements IdentityProviderPort {
                 .build();
         cognitoClient.confirmForgotPassword(request);
     }
+
+    @Override
+    public void changePassword(String email, String accessToken, String oldPassword, String newPassword) {
+        var request = ChangePasswordRequest.builder()
+                .accessToken(accessToken)
+                .previousPassword(oldPassword)
+                .proposedPassword(newPassword)
+                .build();
+        cognitoClient.changePassword(request);
+    }
 }

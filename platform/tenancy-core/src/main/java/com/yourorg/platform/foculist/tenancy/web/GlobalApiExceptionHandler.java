@@ -15,23 +15,61 @@ public class GlobalApiExceptionHandler {
     private static final Logger log = LoggerFactory.getLogger(GlobalApiExceptionHandler.class);
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ApiErrorResponse> handleValidationException(MethodArgumentNotValidException ex) {
+    public ResponseEntity<com.yourorg.platform.foculist.tenancy.web.model.ApiResponse<Object>> handleValidationException(MethodArgumentNotValidException ex) {
         String requestId = MDC.get(RequestIdFilter.REQUEST_ID_MDC_KEY);
-        var errors = ex.getBindingResult().getFieldErrors().stream()
-                .map(err -> err.getField() + ": " + err.getDefaultMessage())
+        if (requestId == null) requestId = java.util.UUID.randomUUID().toString();
+
+        var details = ex.getBindingResult().getFieldErrors().stream()
+                .map(err -> com.yourorg.platform.foculist.tenancy.web.model.ApiResponse.ApiErrorDetail.builder()
+                        .field(err.getField())
+                        .reason(err.getCode())
+                        .message(err.getDefaultMessage())
+                        .build())
                 .collect(Collectors.toList());
-        log.warn("Validation error reqId={} errors={}", requestId, errors);
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
-                ApiErrorResponse.of(requestId, "VALIDATION_ERROR", "Invalid request payload", errors)
-        );
+
+        var error = com.yourorg.platform.foculist.tenancy.web.model.ApiResponse.ApiError.builder()
+                .code("VALIDATION_ERROR")
+                .message("Invalid request payload")
+                .details(details)
+                .build();
+
+        var metadata = com.yourorg.platform.foculist.tenancy.web.model.ApiResponse.ApiMetadata.builder()
+                .requestId(requestId)
+                .timestamp(java.time.OffsetDateTime.now())
+                .build();
+
+        var response = com.yourorg.platform.foculist.tenancy.web.model.ApiResponse.builder()
+                .apiVersion("v1")
+                .error(error)
+                .metadata(metadata)
+                .build();
+
+        log.warn("Validation error reqId={} errors={}", requestId, details);
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
     }
 
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<ApiErrorResponse> handleException(Exception ex) {
+    public ResponseEntity<com.yourorg.platform.foculist.tenancy.web.model.ApiResponse<Object>> handleException(Exception ex) {
         String requestId = MDC.get(RequestIdFilter.REQUEST_ID_MDC_KEY);
+        if (requestId == null) requestId = java.util.UUID.randomUUID().toString();
         log.error("Unhandled exception reqId={}", requestId, ex);
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
-                ApiErrorResponse.of(requestId, "INTERNAL_ERROR", "An unexpected error occurred")
-        );
+
+        var error = com.yourorg.platform.foculist.tenancy.web.model.ApiResponse.ApiError.builder()
+                .code("INTERNAL_ERROR")
+                .message("An unexpected error occurred")
+                .build();
+
+        var metadata = com.yourorg.platform.foculist.tenancy.web.model.ApiResponse.ApiMetadata.builder()
+                .requestId(requestId)
+                .timestamp(java.time.OffsetDateTime.now())
+                .build();
+
+        var response = com.yourorg.platform.foculist.tenancy.web.model.ApiResponse.builder()
+                .apiVersion("v1")
+                .error(error)
+                .metadata(metadata)
+                .build();
+
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
     }
 }

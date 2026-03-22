@@ -26,6 +26,13 @@ spring:
 springdoc:
   api-docs:
     path: /v3/api-docs
+    enabled: true
+    servers:
+      - url: /api/sync
+        description: Unified Gateway
+  swagger-ui:
+    path: /swagger-ui.html
+  show-actuator: true
 
 management:
   endpoint:
@@ -85,3 +92,4 @@ app:
 
 server:
   port: 8086
+  forward-headers-strategy: framework

@@ -31,4 +31,10 @@ public class UserService {
     public Optional<User> findAnyUser() {
         return userRepository.findAll().stream().findFirst();
     }
+
+    public User updateProfile(UUID id, String fullName) {
+        User user = getUserById(id);
+        user.setFullName(fullName);
+        return userRepository.save(user);
+    }
 }

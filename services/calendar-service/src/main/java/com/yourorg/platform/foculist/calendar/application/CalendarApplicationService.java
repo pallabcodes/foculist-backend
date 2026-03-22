@@ -24,17 +24,9 @@ public class CalendarApplicationService {
             CalendarEventRepositoryPort calendarEventRepository,
             AgendaContextRepositoryPort agendaContextRepository
     ) {
-        this(calendarEventRepository, agendaContextRepository, Clock.systemUTC());
-    }
-
-    CalendarApplicationService(
-            CalendarEventRepositoryPort calendarEventRepository,
-            AgendaContextRepositoryPort agendaContextRepository,
-            Clock clock
-    ) {
         this.calendarEventRepository = calendarEventRepository;
         this.agendaContextRepository = agendaContextRepository;
-        this.clock = clock;
+        this.clock = Clock.systemUTC();
     }
 
     @Transactional(readOnly = true)

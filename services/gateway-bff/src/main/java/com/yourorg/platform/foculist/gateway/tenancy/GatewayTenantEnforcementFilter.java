@@ -42,9 +42,20 @@ public class GatewayTenantEnforcementFilter implements GlobalFilter, Ordered {
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
         String requestPath = exchange.getRequest().getURI().getPath();
-        if ((properties.isSkipActuator() && requestPath.startsWith("/actuator")) ||
+        boolean skip = (properties.isSkipActuator() && requestPath.startsWith("/actuator")) ||
             requestPath.contains("/v3/api-docs") ||
-            requestPath.contains("/swagger-ui")) {
+            requestPath.contains("/swagger-ui") ||
+            requestPath.startsWith("/api/auth/") ||
+            requestPath.startsWith("/api/identity/v1/auth/") ||
+            requestPath.startsWith("/api/users/register") ||
+            requestPath.startsWith("/api/identity/v1/users/register") ||
+            requestPath.startsWith("/api/identity/v1/onboard") ||
+            requestPath.equals("/api/user") ||
+            requestPath.equals("/api/identity/v1/user");
+        
+        if (skip) {
+            org.slf4j.LoggerFactory.getLogger(GatewayTenantEnforcementFilter.class)
+                    .debug("Skipping tenancy enforcement for path: {}", requestPath);
             return chain.filter(exchange);
         }
 

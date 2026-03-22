@@ -23,14 +23,21 @@ public class GrpcIdentityService extends IdentityServiceGrpc.IdentityServiceImpl
     @Override
     public void authenticate(AuthRequest request, StreamObserver<AuthResponse> responseObserver) {
         try {
-            AuthService.AuthTokens tokens = authService.login(request.getTenantId(), request.getEmail(), request.getPassword());
-            AuthResponse response = AuthResponse.newBuilder()
-                    .setAccessToken(tokens.accessToken())
-                    .setRefreshToken(tokens.refreshToken())
-                    .setExpiresIn(3600) // Mocked expiry for now
-                    .build();
-            responseObserver.onNext(response);
-            responseObserver.onCompleted();
+            AuthService.LoginResult result = authService.login(request.getTenantId(), request.getEmail(), request.getPassword(), false);
+            
+            if (result instanceof AuthService.AuthTokens tokens) {
+                AuthResponse response = AuthResponse.newBuilder()
+                        .setAccessToken(tokens.accessToken())
+                        .setRefreshToken(tokens.refreshToken())
+                        .setExpiresIn(3600) // Mocked expiry for now
+                        .build();
+                responseObserver.onNext(response);
+                responseObserver.onCompleted();
+            } else if (result instanceof AuthService.MfaChallenge) {
+                responseObserver.onError(io.grpc.Status.UNIMPLEMENTED
+                        .withDescription("MFA is required but not yet supported over gRPC")
+                        .asRuntimeException());
+            }
         } catch (Exception e) {
             log.error("gRPC Authentication failed for user: {}", request.getEmail(), e);
             responseObserver.onError(io.grpc.Status.UNAUTHENTICATED
