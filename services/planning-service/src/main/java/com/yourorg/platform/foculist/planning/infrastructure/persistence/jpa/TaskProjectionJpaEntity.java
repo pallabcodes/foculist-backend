@@ -31,6 +31,12 @@ public class TaskProjectionJpaEntity {
     @Column(name = "sprint_id")
     private UUID sprintId;
 
+    @Column(name = "epic_id")
+    private UUID epicId;
+
+    @Column(name = "board_column_id")
+    private UUID boardColumnId;
+
     @Column(name = "title", nullable = false, length = 255)
     private String title;
 
@@ -61,6 +67,8 @@ public class TaskProjectionJpaEntity {
             UUID id,
             String tenantId,
             UUID sprintId,
+            UUID epicId,
+            UUID boardColumnId,
             String title,
             String description,
             TaskStatus status,
@@ -72,6 +80,8 @@ public class TaskProjectionJpaEntity {
         this.id = id;
         this.tenantId = tenantId;
         this.sprintId = sprintId;
+        this.epicId = epicId;
+        this.boardColumnId = boardColumnId;
         this.title = title;
         this.description = description;
         this.status = status;
@@ -86,6 +96,8 @@ public class TaskProjectionJpaEntity {
                 projection.id(),
                 projection.tenantId(),
                 projection.sprintId(),
+                projection.epicId(),
+                projection.boardColumnId(),
                 projection.title(),
                 projection.description(),
                 projection.status(),
@@ -97,6 +109,6 @@ public class TaskProjectionJpaEntity {
     }
 
     public TaskProjection toDomain() {
-        return new TaskProjection(id, tenantId, sprintId, title, description, status, priority, createdAt, updatedAt, version);
+        return new TaskProjection(id, tenantId, sprintId, epicId, boardColumnId, title, description, status, priority, createdAt, updatedAt, version);
     }
 }

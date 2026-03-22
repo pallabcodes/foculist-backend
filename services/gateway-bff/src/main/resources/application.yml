@@ -47,6 +47,16 @@ spring:
                 name: syncService
                 fallbackUri: forward:/fallback/sync
             - RewritePath=/api/sync/(?<segment>.*), /${segment}
+        - id: calendar-service
+          uri: ${app.gateway.downstream.calendar}
+          predicates:
+            - Path=/api/calendar/**
+          filters:
+            - name: CircuitBreaker
+              args:
+                name: calendarService
+                fallbackUri: forward:/fallback/calendar
+            - RewritePath=/api/calendar/(?<segment>.*), /v1/calendar/${segment}
 
 grpc:
   client:

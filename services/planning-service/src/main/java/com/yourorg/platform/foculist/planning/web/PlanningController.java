@@ -4,6 +4,13 @@ import com.yourorg.platform.foculist.planning.application.CreateTaskCommand;
 import com.yourorg.platform.foculist.planning.application.PlanningApplicationService;
 import com.yourorg.platform.foculist.planning.application.SprintView;
 import com.yourorg.platform.foculist.planning.application.TaskView;
+import com.yourorg.platform.foculist.planning.application.BoardView;
+import com.yourorg.platform.foculist.planning.application.BoardColumnView;
+import com.yourorg.platform.foculist.planning.application.EpicView;
+import com.yourorg.platform.foculist.planning.application.CreateBoardCommand;
+import com.yourorg.platform.foculist.planning.application.CreateBoardColumnCommand;
+import com.yourorg.platform.foculist.planning.application.CreateEpicCommand;
+import com.yourorg.platform.foculist.planning.application.UpdateTaskPlanningCommand;
 import com.yourorg.platform.foculist.tenancy.TenantContext;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
@@ -170,6 +177,101 @@ public class PlanningController {
         return ResponseEntity.noContent().build();
     }
 
+    @GetMapping("/boards")
+    public List<BoardView> listBoards(
+            @RequestParam(required = false) UUID projectId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "50") int size
+    ) {
+        return planningApplicationService.listBoards(TenantContext.require(), projectId, page, size);
+    }
+
+    @PostMapping("/boards")
+    public ResponseEntity<BoardView> createBoard(@Valid @RequestBody CreateBoardRequest request) {
+        BoardView created = planningApplicationService.createBoard(
+                TenantContext.require(),
+                new CreateBoardCommand(request.projectId(), request.name(), request.type())
+        );
+        return ResponseEntity.status(HttpStatus.CREATED).body(created);
+    }
+
+    @GetMapping("/boards/{boardId}/columns")
+    public List<BoardColumnView> listBoardColumns(@PathVariable UUID boardId) {
+        return planningApplicationService.listBoardColumns(TenantContext.require(), boardId);
+    }
+
+    @PostMapping("/boards/{boardId}/columns")
+    public ResponseEntity<BoardColumnView> createBoardColumn(@PathVariable UUID boardId, @Valid @RequestBody CreateBoardColumnRequest request) {
+        BoardColumnView created = planningApplicationService.createBoardColumn(
+                TenantContext.require(),
+                boardId,
+                new CreateBoardColumnCommand(request.name(), request.statusMapping(), request.orderIndex())
+        );
+        return ResponseEntity.status(HttpStatus.CREATED).body(created);
+    }
+
+    @GetMapping("/epics")
+    public List<EpicView> listEpics(
+            @RequestParam(required = false) UUID projectId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "50") int size
+    ) {
+        return planningApplicationService.listEpics(TenantContext.require(), projectId, page, size);
+    }
+
+    @PostMapping("/epics")
+    public ResponseEntity<EpicView> createEpic(@Valid @RequestBody CreateEpicRequest request) {
+        EpicView created = planningApplicationService.createEpic(
+                TenantContext.require(),
+                new CreateEpicCommand(request.projectId(), request.name(), request.summary(), request.color(), request.startDate(), request.targetDate())
+        );
+        return ResponseEntity.status(HttpStatus.CREATED).body(created);
+    }
+
+    @PreAuthorize("hasPermission(#taskId, 'Task', 'WRITE')")
+    @PutMapping("/tasks/{taskId}/planning")
+    public ResponseEntity<TaskView> updateTaskPlanning(@PathVariable UUID taskId, @Valid @RequestBody UpdateTaskPlanningRequest request) {
+        TaskView updated = planningApplicationService.updateTaskPlanning(
+                TenantContext.require(),
+                taskId,
+                new UpdateTaskPlanningCommand(request.sprintId(), request.epicId(), request.boardColumnId())
+        );
+        return ResponseEntity.ok(updated);
+    }
+
+    @PutMapping("/boards/{boardId}")
+    public ResponseEntity<BoardView> updateBoard(@PathVariable UUID boardId, @Valid @RequestBody UpdateBoardRequest request) {
+        return ResponseEntity.ok(planningApplicationService.updateBoard(TenantContext.require(), boardId, request.name()));
+    }
+
+    @DeleteMapping("/boards/{boardId}")
+    public ResponseEntity<Void> deleteBoard(@PathVariable UUID boardId) {
+        planningApplicationService.deleteBoard(TenantContext.require(), boardId);
+        return ResponseEntity.noContent().build();
+    }
+
+    @PutMapping("/boards/{boardId}/columns/{columnId}")
+    public ResponseEntity<BoardColumnView> updateBoardColumn(@PathVariable UUID boardId, @PathVariable UUID columnId, @Valid @RequestBody UpdateBoardColumnRequest request) {
+        return ResponseEntity.ok(planningApplicationService.updateBoardColumn(TenantContext.require(), columnId, request.name(), request.orderIndex()));
+    }
+
+    @DeleteMapping("/boards/{boardId}/columns/{columnId}")
+    public ResponseEntity<Void> deleteBoardColumn(@PathVariable UUID boardId, @PathVariable UUID columnId) {
+        planningApplicationService.deleteBoardColumn(TenantContext.require(), columnId);
+        return ResponseEntity.noContent().build();
+    }
+
+    @PutMapping("/epics/{epicId}")
+    public ResponseEntity<EpicView> updateEpic(@PathVariable UUID epicId, @Valid @RequestBody UpdateEpicRequest request) {
+        return ResponseEntity.ok(planningApplicationService.updateEpic(TenantContext.require(), epicId, request.name(), request.summary(), request.color(), request.status()));
+    }
+
+    @DeleteMapping("/epics/{epicId}")
+    public ResponseEntity<Void> deleteEpic(@PathVariable UUID epicId) {
+        planningApplicationService.deleteEpic(TenantContext.require(), epicId);
+        return ResponseEntity.noContent().build();
+    }
+
     public record CreateTaskRequest(
             @NotBlank String title,
             String description,
@@ -195,4 +297,42 @@ public class PlanningController {
             @NotBlank String endDate
     ) {
     }
+
+    public record CreateBoardRequest(
+            UUID projectId,
+            @NotBlank String name,
+            @NotBlank String type
+    ) {}
+
+    public record CreateBoardColumnRequest(
+            @NotBlank String name,
+            String statusMapping,
+            Integer orderIndex
+    ) {}
+
+    public record CreateEpicRequest(
+            UUID projectId,
+            @NotBlank String name,
+            String summary,
+            String color,
+            String startDate,
+            String targetDate
+    ) {}
+
+    public record UpdateTaskPlanningRequest(
+            String sprintId,
+            String epicId,
+            String boardColumnId
+    ) {}
+
+    public record UpdateBoardRequest(@NotBlank String name) {}
+
+    public record UpdateBoardColumnRequest(String name, Integer orderIndex) {}
+
+    public record UpdateEpicRequest(
+            String name,
+            String summary,
+            String color,
+            String status
+    ) {}
 }

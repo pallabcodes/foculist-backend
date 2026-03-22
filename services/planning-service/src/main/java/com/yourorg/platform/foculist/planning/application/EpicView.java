@@ -3,17 +3,16 @@ package com.yourorg.platform.foculist.planning.application;
 import java.time.Instant;
 import java.util.UUID;
 
-public record TaskView(
+public record EpicView(
         UUID id,
-        UUID sprintId,
-        UUID epicId,
-        UUID boardColumnId,
-        String title,
-        String description,
+        UUID projectId,
+        String name,
+        String summary,
+        String color,
         String status,
-        String priority,
+        Instant startDate,
+        Instant targetDate,
         Instant createdAt,
         String tenantId,
         Long version
-) {
-}
+) {}

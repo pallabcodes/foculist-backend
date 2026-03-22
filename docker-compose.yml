@@ -186,6 +186,7 @@ services:
       dockerfile: services/sync-service/Dockerfile
     environment:
       SPRING_PROFILES_ACTIVE: docker,local
+      AWS_ENDPOINT: http://foculist-localstack-1:4566
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/foculist
       SPRING_DATASOURCE_USERNAME: foculist
       SPRING_DATASOURCE_PASSWORD: foculist-secret-password

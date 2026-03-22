@@ -101,6 +101,10 @@ public class SyncWebSocketHandler implements WebSocketHandler {
                                 "timestamp", Instant.now().toString()
                         ));
 
+                        // TODO: Distributed Scaling Reminder
+                        // In-memory session registry broadcasts locally on this node.
+                        // To support multiple clustered Sync instances, integrate Redis Pub/Sub 
+                        // or RabbitMQ exchange here to forward `remote_change` to foreign nodes.
                         return Mono.when(
                                 session.send(Mono.just(session.textMessage(ack))),
                                 sessionRegistry.broadcastToTenant(tenantId, broadcast, session.getId())

@@ -37,6 +37,12 @@ public class TaskSnapshotJpaEntity {
     @Column(name = "sprint_id")
     private UUID sprintId;
 
+    @Column(name = "epic_id")
+    private UUID epicId;
+
+    @Column(name = "board_column_id")
+    private UUID boardColumnId;
+
     @Column(name = "title", nullable = false, length = 255)
     private String title;
 
@@ -84,6 +90,8 @@ public class TaskSnapshotJpaEntity {
             String tenantId,
             UUID taskId,
             UUID sprintId,
+            UUID epicId,
+            UUID boardColumnId,
             String title,
             String description,
             TaskStatus status,
@@ -101,6 +109,8 @@ public class TaskSnapshotJpaEntity {
         this.tenantId = tenantId;
         this.taskId = taskId;
         this.sprintId = sprintId;
+        this.epicId = epicId;
+        this.boardColumnId = boardColumnId;
         this.title = title;
         this.description = description;
         this.status = status;
@@ -121,6 +131,8 @@ public class TaskSnapshotJpaEntity {
                 snapshot.tenantId(),
                 snapshot.taskId(),
                 snapshot.sprintId(),
+                snapshot.epicId(),
+                snapshot.boardColumnId(),
                 snapshot.title(),
                 snapshot.description(),
                 snapshot.status(),
@@ -142,6 +154,8 @@ public class TaskSnapshotJpaEntity {
                 tenantId,
                 taskId,
                 sprintId,
+                epicId,
+                boardColumnId,
                 title,
                 description,
                 status,

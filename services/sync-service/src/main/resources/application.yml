@@ -72,6 +72,9 @@ app:
     polling-enabled: false
     poll-interval-ms: 5000
     batch-size: 100
+  sync:
+    op-log:
+      mode: dynamodb
   aws:
     region: ${AWS_REGION:us-east-1}
     endpoint: ${AWS_ENDPOINT:http://localhost:4566}

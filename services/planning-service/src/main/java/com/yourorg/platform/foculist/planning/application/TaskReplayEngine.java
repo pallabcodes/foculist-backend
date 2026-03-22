@@ -116,6 +116,8 @@ public class TaskReplayEngine {
                 event.taskId(),
                 event.tenantId(),
                 event.sprintId(),
+                null, // epicId
+                null, // boardColumnId
                 event.title(),
                 event.description(),
                 TaskStatus.from(event.status()),
@@ -138,6 +140,8 @@ public class TaskReplayEngine {
                 event.taskId(),
                 event.tenantId(),
                 event.sprintId(),
+                current.epicId(),
+                current.boardColumnId(),
                 event.title(),
                 event.description(),
                 current.status(),
@@ -160,6 +164,8 @@ public class TaskReplayEngine {
                 current.id(),
                 current.tenantId(),
                 current.sprintId(),
+                current.epicId(),
+                current.boardColumnId(),
                 current.title(),
                 current.description(),
                 TaskStatus.from(event.newStatus()),
@@ -178,6 +184,8 @@ public class TaskReplayEngine {
         return new TaskView(
                 task.id(),
                 task.sprintId(),
+                task.epicId(),
+                task.boardColumnId(),
                 task.title(),
                 task.description(),
                 task.status().name(),

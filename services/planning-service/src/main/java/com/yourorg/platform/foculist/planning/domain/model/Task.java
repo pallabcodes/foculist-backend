@@ -9,6 +9,8 @@ public record Task(
         UUID id,
         String tenantId,
         UUID sprintId,
+        UUID epicId,
+        UUID boardColumnId,
         String title,
         String description,
         TaskStatus status,
@@ -45,6 +47,8 @@ public record Task(
     public static Task create(
             String tenantId,
             UUID sprintId,
+            UUID epicId,
+            UUID boardColumnId,
             String title,
             String description,
             TaskStatus status,
@@ -56,6 +60,8 @@ public record Task(
                 UUID.randomUUID(),
                 tenantId,
                 sprintId,
+                epicId,
+                boardColumnId,
                 title.trim(),
                 description,
                 status,
@@ -70,11 +76,11 @@ public record Task(
         );
     }
 
-    public Task update(UUID sprintId, String title, String description, TaskPriority priority, Instant now, String updatedBy) {
-        return new Task(id, tenantId, sprintId, title.trim(), description, status, priority, createdAt, now, createdBy, updatedBy, deletedAt, metadata, version);
+    public Task update(UUID sprintId, UUID epicId, UUID boardColumnId, String title, String description, TaskPriority priority, Instant now, String updatedBy) {
+        return new Task(id, tenantId, sprintId, epicId, boardColumnId, title.trim(), description, status, priority, createdAt, now, createdBy, updatedBy, deletedAt, metadata, version);
     }
 
     public Task updateStatus(TaskStatus newStatus, Instant now, String updatedBy) {
-        return new Task(id, tenantId, sprintId, title, description, newStatus, priority, createdAt, now, createdBy, updatedBy, deletedAt, metadata, version);
+        return new Task(id, tenantId, sprintId, epicId, boardColumnId, title, description, newStatus, priority, createdAt, now, createdBy, updatedBy, deletedAt, metadata, version);
     }
 }

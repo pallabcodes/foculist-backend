@@ -26,9 +26,16 @@ public class SyncController {
     }
 
     @PostMapping("/push")
-    public SyncPushResponseView push(@Valid @RequestBody SyncPushRequest request) {
+    public SyncPushResponseView push(
+            @Valid @RequestBody SyncPushRequest request,
+            org.springframework.web.server.ServerWebExchange exchange
+    ) {
+        String tenantId = exchange.getAttribute("tenantId");
+        if (tenantId == null) {
+            throw new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.BAD_REQUEST, "Tenant identifier is missing");
+        }
         return syncApplicationService.push(
-                TenantContext.require(),
+                tenantId,
                 new SyncPushCommand(
                         request.deviceId(),
                         request.pendingChanges(),
@@ -40,9 +47,16 @@ public class SyncController {
     }
 
     @PostMapping("/pull")
-    public SyncPullResponseView pull(@Valid @RequestBody SyncPullRequest request) {
+    public SyncPullResponseView pull(
+            @Valid @RequestBody SyncPullRequest request,
+            org.springframework.web.server.ServerWebExchange exchange
+    ) {
+        String tenantId = exchange.getAttribute("tenantId");
+        if (tenantId == null) {
+            throw new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.BAD_REQUEST, "Tenant identifier is missing");
+        }
         return syncApplicationService.pull(
-                TenantContext.require(),
+                tenantId,
                 new SyncPullCommand(
                         request.deviceId(),
                         request.lastSync()

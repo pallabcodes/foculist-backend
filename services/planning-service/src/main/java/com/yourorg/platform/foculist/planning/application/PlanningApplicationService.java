@@ -23,6 +23,14 @@ import com.yourorg.platform.foculist.planning.domain.port.OutboxEventRepositoryP
 import com.yourorg.platform.foculist.planning.domain.port.SprintRepositoryPort;
 import com.yourorg.platform.foculist.planning.domain.port.TaskRepositoryPort;
 import com.yourorg.platform.foculist.planning.domain.port.TaskSnapshotJobRepositoryPort;
+import com.yourorg.platform.foculist.planning.domain.port.BoardRepositoryPort;
+import com.yourorg.platform.foculist.planning.domain.port.BoardColumnRepositoryPort;
+import com.yourorg.platform.foculist.planning.domain.port.EpicRepositoryPort;
+import com.yourorg.platform.foculist.planning.domain.model.Board;
+import com.yourorg.platform.foculist.planning.domain.model.BoardColumn;
+import com.yourorg.platform.foculist.planning.domain.model.BoardType;
+import com.yourorg.platform.foculist.planning.domain.model.Epic;
+import com.yourorg.platform.foculist.planning.domain.model.EpicStatus;
 import java.time.Clock;
 import java.time.Instant;
 import java.util.Arrays;
@@ -47,6 +55,9 @@ public class PlanningApplicationService {
     private final EventStoreRepositoryPort eventStoreRepository;
     private final OutboxEventRepositoryPort outboxEventRepository;
     private final TaskSnapshotJobRepositoryPort snapshotJobRepository;
+    private final BoardRepositoryPort boardRepository;
+    private final BoardColumnRepositoryPort boardColumnRepository;
+    private final EpicRepositoryPort epicRepository;
     private final ObjectMapper objectMapper;
     private final Clock clock;
 
@@ -55,6 +66,8 @@ public class PlanningApplicationService {
         Task task = Task.create(
                 tenantId,
                 parseSprintId(command.sprintId()),
+                null, // epicId
+                null, // boardColumnId
                 command.title(),
                 command.description(),
                 TaskStatus.from(command.status()),
@@ -102,6 +115,8 @@ public class PlanningApplicationService {
                 .orElseThrow(() -> new PlanningDomainException("Task not found"));
         Task updated = task.update(
                 parseSprintId(command.sprintId()),
+                task.epicId(),
+                task.boardColumnId(),
                 command.title(),
                 command.description(),
                 TaskPriority.from(command.priority()),
@@ -130,6 +145,37 @@ public class PlanningApplicationService {
 
         TaskStatusChangedEvent domainEvent = new TaskStatusChangedEvent(
                 saved.id(), saved.tenantId(), oldStatus, saved.status().name(),
+                saved.version(), Instant.now(clock)
+        );
+        saveTaskEvent(domainEvent);
+
+        return toView(saved);
+    }
+
+    @Transactional
+    public TaskView updateTaskPlanning(String tenantId, UUID taskId, UpdateTaskPlanningCommand command) {
+        Task task = taskRepository.findByIdAndTenantId(taskId, tenantId)
+                .orElseThrow(() -> new PlanningDomainException("Task not found"));
+        
+        UUID sprintId = parseId(command.sprintId());
+        UUID epicId = parseId(command.epicId());
+        UUID boardColumnId = parseId(command.boardColumnId());
+        
+        Task updated = task.update(
+                sprintId,
+                epicId,
+                boardColumnId,
+                task.title(),
+                task.description(),
+                task.priority(),
+                Instant.now(clock),
+                "system"
+        );
+        Task saved = taskRepository.save(updated);
+        
+        TaskUpdatedEvent domainEvent = new TaskUpdatedEvent(
+                saved.id(), saved.tenantId(), saved.sprintId(), saved.title(),
+                saved.description(), saved.priority().name(),
                 saved.version(), Instant.now(clock)
         );
         saveTaskEvent(domainEvent);
@@ -203,6 +249,113 @@ public class PlanningApplicationService {
         return Arrays.stream(TaskStatus.values()).map(Enum::name).toList();
     }
 
+    @Transactional(readOnly = true)
+    public List<BoardView> listBoards(String tenantId, UUID projectId, int page, int size) {
+        if (projectId != null) {
+            return boardRepository.findByProjectIdAndTenantId(projectId, tenantId, page, size).stream().map(this::toBoardView).toList();
+        }
+        return boardRepository.findByTenantId(tenantId, page, size).stream().map(this::toBoardView).toList();
+    }
+
+    @Transactional
+    public BoardView createBoard(String tenantId, CreateBoardCommand command) {
+        Board board = new Board(
+                UUID.randomUUID(), tenantId, command.projectId(), command.name(),
+                BoardType.valueOf(command.type()), Instant.now(clock), Instant.now(clock),
+                "system", null, null, null, 0L
+        );
+        return toBoardView(boardRepository.save(board));
+    }
+
+    @Transactional(readOnly = true)
+    public List<BoardColumnView> listBoardColumns(String tenantId, UUID boardId) {
+        return boardColumnRepository.findByBoardIdAndTenantId(boardId, tenantId).stream().map(this::toBoardColumnView).toList();
+    }
+
+    @Transactional
+    public BoardColumnView createBoardColumn(String tenantId, UUID boardId, CreateBoardColumnCommand command) {
+        BoardColumn column = new BoardColumn(
+                UUID.randomUUID(), tenantId, boardId, command.name(), command.statusMapping(),
+                command.orderIndex() != null ? command.orderIndex() : 0,
+                Instant.now(clock), Instant.now(clock), "system", null, null, 0L
+        );
+        return toBoardColumnView(boardColumnRepository.save(column));
+    }
+
+    @Transactional(readOnly = true)
+    public List<EpicView> listEpics(String tenantId, UUID projectId, int page, int size) {
+        if (projectId != null) {
+            return epicRepository.findByProjectIdAndTenantId(projectId, tenantId, page, size).stream().map(this::toEpicView).toList();
+        }
+        return epicRepository.findByTenantId(tenantId, page, size).stream().map(this::toEpicView).toList();
+    }
+
+    @Transactional
+    public EpicView createEpic(String tenantId, CreateEpicCommand command) {
+        Epic epic = new Epic(
+                UUID.randomUUID(), tenantId, command.projectId(), command.name(),
+                command.summary(), command.color(), EpicStatus.TO_DO,
+                command.startDate() != null ? Instant.parse(command.startDate()) : null,
+                command.targetDate() != null ? Instant.parse(command.targetDate()) : null,
+                Instant.now(clock), Instant.now(clock), "system", null, null, null, 0L
+        );
+        return toEpicView(epicRepository.save(epic));
+    }
+
+    @Transactional
+    public BoardView updateBoard(String tenantId, UUID boardId, String name) {
+        Board board = boardRepository.findByIdAndTenantId(boardId, tenantId)
+                .orElseThrow(() -> new PlanningDomainException("Board not found"));
+        Board updated = board.update(name, "system");
+        return toBoardView(boardRepository.save(updated));
+    }
+
+    @Transactional
+    public void deleteBoard(String tenantId, UUID boardId) {
+        Board board = boardRepository.findByIdAndTenantId(boardId, tenantId)
+                .orElseThrow(() -> new PlanningDomainException("Board not found"));
+        boardRepository.delete(board);
+    }
+
+    @Transactional
+    public EpicView updateEpic(String tenantId, UUID epicId, String name, String summary, String color, String status) {
+        Epic epic = epicRepository.findByIdAndTenantId(epicId, tenantId)
+                .orElseThrow(() -> new PlanningDomainException("Epic not found"));
+        Epic updated = epic.update(
+                name, summary, color, 
+                status != null ? EpicStatus.valueOf(status) : null, 
+                epic.startDate(), epic.targetDate(), "system"
+        );
+        return toEpicView(epicRepository.save(updated));
+    }
+
+    @Transactional
+    public void deleteEpic(String tenantId, UUID epicId) {
+        Epic epic = epicRepository.findByIdAndTenantId(epicId, tenantId)
+                .orElseThrow(() -> new PlanningDomainException("Epic not found"));
+        epicRepository.delete(epic);
+    }
+
+    @Transactional
+    public BoardColumnView updateBoardColumn(String tenantId, UUID columnId, String name, Integer orderIndex) {
+        BoardColumn column = boardColumnRepository.findByIdAndTenantId(columnId, tenantId)
+                .orElseThrow(() -> new PlanningDomainException("Column not found"));
+        BoardColumn updated = new BoardColumn(
+                column.id(), column.tenantId(), column.boardId(), 
+                name != null ? name : column.name(), column.statusMapping(), 
+                orderIndex != null ? orderIndex : column.orderIndex(),
+                column.createdAt(), Instant.now(clock), column.createdBy(), "system", null, column.version()
+        );
+        return toBoardColumnView(boardColumnRepository.save(updated));
+    }
+
+    @Transactional
+    public void deleteBoardColumn(String tenantId, UUID columnId) {
+        BoardColumn column = boardColumnRepository.findByIdAndTenantId(columnId, tenantId)
+                .orElseThrow(() -> new PlanningDomainException("Column not found"));
+        boardColumnRepository.delete(column);
+    }
+
     private void saveTaskEvent(TaskEvent domainEvent) {
         try {
             EventStore store = new EventStore(
@@ -244,8 +397,12 @@ public class PlanningApplicationService {
         }
     }
 
+    private UUID parseId(String idStr) {
+        return (idStr != null && !idStr.isBlank()) ? UUID.fromString(idStr) : null;
+    }
+
     private UUID parseSprintId(String sprintId) {
-        return (sprintId != null && !sprintId.isBlank()) ? UUID.fromString(sprintId) : null;
+        return parseId(sprintId);
     }
 
     private Cursor parseCursor(String after) {
@@ -268,6 +425,8 @@ public class PlanningApplicationService {
         return new TaskView(
                 task.id(),
                 task.sprintId(),
+                task.epicId(),
+                task.boardColumnId(),
                 task.title(),
                 task.description(),
                 task.status().name(),
@@ -288,5 +447,17 @@ public class PlanningApplicationService {
                 sprint.tenantId(),
                 sprint.version()
         );
+    }
+
+    private BoardView toBoardView(Board board) {
+        return new BoardView(board.id(), board.projectId(), board.name(), board.type().name(), board.createdAt(), board.tenantId(), board.version());
+    }
+
+    private BoardColumnView toBoardColumnView(BoardColumn column) {
+        return new BoardColumnView(column.id(), column.boardId(), column.name(), column.statusMapping(), column.orderIndex(), column.createdAt(), column.tenantId(), column.version());
+    }
+
+    private EpicView toEpicView(Epic epic) {
+        return new EpicView(epic.id(), epic.projectId(), epic.name(), epic.summary(), epic.color(), epic.status().name(), epic.startDate(), epic.targetDate(), epic.createdAt(), epic.tenantId(), epic.version());
     }
 }

@@ -87,7 +87,7 @@ public class GatewayRoutingConfig {
                         .path("/api/calendar/**")
                         .filters(filter -> filter
                                 .circuitBreaker(config -> config.setName("calendarService").setFallbackUri("forward:/fallback/calendar"))
-                                .rewritePath("/api/calendar(?<segment>/?.*)", "/v1/calendar${segment}"))
+                                .rewritePath("/api/calendar/(?<segment>.*)", "/v1/calendar/${segment}"))
                         .uri(downstream.getCalendar()))
                 .route("meeting", route -> route
                         .path("/api/meetings/**")
