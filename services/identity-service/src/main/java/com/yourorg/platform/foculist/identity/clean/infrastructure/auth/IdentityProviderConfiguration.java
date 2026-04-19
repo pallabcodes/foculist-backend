@@ -18,9 +18,6 @@ import java.net.URI;
 @Configuration
 public class IdentityProviderConfiguration {
 
-    @Value("${app.aws.cognito.userPoolId:fallback-pool}")
-    private String userPoolId;
-
     @Value("${app.aws.cognito.clientId:fallback-client}")
     private String clientId;
 
@@ -59,7 +56,7 @@ public class IdentityProviderConfiguration {
     @Bean
     @Profile({"!local & !aws-local", "aws"})
     public IdentityProviderPort productionIdentityProvider(CognitoIdentityProviderClient cognitoClient) {
-        return new AwsCognitoIdentityProviderAdapter(cognitoClient, userPoolId, clientId);
+        return new AwsCognitoIdentityProviderAdapter(cognitoClient, clientId);
     }
 
     /**
@@ -77,7 +74,7 @@ public class IdentityProviderConfiguration {
     @Profile("local")
     @org.springframework.boot.autoconfigure.condition.ConditionalOnProperty(name = "identity.provider", havingValue = "cognito")
     public IdentityProviderPort localCognitoIdentityProvider(CognitoIdentityProviderClient cognitoClient) {
-        return new AwsCognitoIdentityProviderAdapter(cognitoClient, userPoolId, clientId);
+        return new AwsCognitoIdentityProviderAdapter(cognitoClient, clientId);
     }
 
     /**
@@ -88,7 +85,7 @@ public class IdentityProviderConfiguration {
     @Bean
     @Profile("aws-local")
     public IdentityProviderPort guardedAwsLocalIdentityProvider(CognitoIdentityProviderClient cognitoClient) {
-        AwsCognitoIdentityProviderAdapter rawAdapter = new AwsCognitoIdentityProviderAdapter(cognitoClient, userPoolId, clientId);
+        AwsCognitoIdentityProviderAdapter rawAdapter = new AwsCognitoIdentityProviderAdapter(cognitoClient, clientId);
         return new LocalRateLimitedIdentityProviderAdapter(rawAdapter);
     }
 }

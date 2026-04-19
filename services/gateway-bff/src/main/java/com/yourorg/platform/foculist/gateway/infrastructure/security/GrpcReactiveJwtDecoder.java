@@ -1,7 +1,6 @@
 package com.yourorg.platform.foculist.gateway.infrastructure.security;
 
 import com.yourorg.platform.foculist.gateway.infrastructure.grpc.GrpcIdentityClientAdapter;
-import com.yourorg.platform.foculist.identity.grpc.ValidationResponse;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
@@ -31,7 +30,7 @@ public class GrpcReactiveJwtDecoder implements ReactiveJwtDecoder {
                     claims.put("userId", response.getUserId());
                     claims.put("tenant", response.getTenantId());
                     claims.put("roles", response.getRolesList());
-                    
+
                     // Standard JWT headers
                     Map<String, Object> headers = new HashMap<>();
                     headers.put("alg", "HmacSHA256"); // Theoretical since we validated via RPC
@@ -41,8 +40,7 @@ public class GrpcReactiveJwtDecoder implements ReactiveJwtDecoder {
                             Instant.now(),
                             Instant.now().plusSeconds(3600), // Mocked for now
                             headers,
-                            claims
-                    );
+                            claims);
                     return Mono.just(jwt);
                 });
     }

@@ -5,11 +5,9 @@ import com.yourorg.platform.foculist.calendar.domain.model.CalendarDomainExcepti
 import com.yourorg.platform.foculist.calendar.domain.model.CalendarEvent;
 import com.yourorg.platform.foculist.calendar.domain.port.AgendaContextRepositoryPort;
 import com.yourorg.platform.foculist.calendar.domain.port.CalendarEventRepositoryPort;
-import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalTime;
-import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
@@ -24,11 +22,9 @@ class CalendarApplicationServiceTest {
 
     @Test
     void createsCalendarEvent() {
-        Instant now = Instant.parse("2026-02-03T09:00:00Z");
-        Clock clock = Clock.fixed(now, ZoneOffset.UTC);
         CalendarEventRepositoryPort eventRepository = mock(CalendarEventRepositoryPort.class);
         AgendaContextRepositoryPort agendaRepository = mock(AgendaContextRepositoryPort.class);
-        CalendarApplicationService service = new CalendarApplicationService(eventRepository, agendaRepository, clock);
+        CalendarApplicationService service = new CalendarApplicationService(eventRepository, agendaRepository);
 
         when(eventRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
 
@@ -78,10 +74,9 @@ class CalendarApplicationServiceTest {
     @Test
     void upsertsAgendaContextByMeetingIdAndTenant() {
         Instant now = Instant.parse("2026-02-03T09:00:00Z");
-        Clock clock = Clock.fixed(now, ZoneOffset.UTC);
         CalendarEventRepositoryPort eventRepository = mock(CalendarEventRepositoryPort.class);
         AgendaContextRepositoryPort agendaRepository = mock(AgendaContextRepositoryPort.class);
-        CalendarApplicationService service = new CalendarApplicationService(eventRepository, agendaRepository, clock);
+        CalendarApplicationService service = new CalendarApplicationService(eventRepository, agendaRepository);
 
         AgendaContext existing = AgendaContext.create(
                 "tenant-a",

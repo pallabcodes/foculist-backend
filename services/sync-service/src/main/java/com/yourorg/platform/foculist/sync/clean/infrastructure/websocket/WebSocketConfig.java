@@ -20,6 +20,7 @@ public class WebSocketConfig {
     }
 
     @Bean
+    @SuppressWarnings("null")
     public HandlerMapping webSocketHandlerMapping() {
         Map<String, SyncWebSocketHandler> map = Map.of("/ws/sync", syncHandler);
 

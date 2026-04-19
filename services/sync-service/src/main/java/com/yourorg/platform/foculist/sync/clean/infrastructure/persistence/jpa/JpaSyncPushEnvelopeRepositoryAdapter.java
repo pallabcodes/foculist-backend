@@ -13,7 +13,10 @@ public class JpaSyncPushEnvelopeRepositoryAdapter implements SyncPushEnvelopeRep
     }
 
     @Override
+    @SuppressWarnings("null")
     public SyncPushEnvelope save(SyncPushEnvelope syncPushEnvelope) {
-        return repository.save(SyncPushEnvelopeJpaEntity.fromDomain(syncPushEnvelope)).toDomain();
+        SyncPushEnvelopeJpaEntity entity = SyncPushEnvelopeJpaEntity.fromDomain(syncPushEnvelope);
+        SyncPushEnvelopeJpaEntity saved = repository.save(entity);
+        return saved.toDomain();
     }
 }

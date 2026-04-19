@@ -7,7 +7,6 @@ import java.util.concurrent.CopyOnWriteArraySet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
-import org.springframework.web.reactive.socket.WebSocketMessage;
 import org.springframework.web.reactive.socket.WebSocketSession;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -47,6 +46,7 @@ public class SyncSessionRegistry {
      * Broadcast a text message to all other sessions in the tenant.
      * Returns a Mono that completes when all broadcast signals are sent.
      */
+    @SuppressWarnings("null")
     public Mono<Void> broadcastToTenant(String tenantId, String payload, String excludeSessionId) {
         Set<WebSocketSession> sessions = tenantSessions.get(tenantId);
         if (sessions == null || sessions.isEmpty()) {

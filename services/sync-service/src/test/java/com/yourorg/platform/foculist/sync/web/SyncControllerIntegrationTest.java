@@ -59,6 +59,7 @@ class SyncControllerIntegrationTest {
     }
 
     @Test
+    @SuppressWarnings("null")
     void pushThenPullReturnsPersistedTenantScopedChanges() throws Exception {
         String pushBody = objectMapper.writeValueAsString(Map.of(
                 "deviceId", "device-a",
@@ -98,6 +99,7 @@ class SyncControllerIntegrationTest {
     }
 
     @Test
+    @SuppressWarnings("null")
     void keepsChangesIsolatedByTenant() throws Exception {
         String pushBody = objectMapper.writeValueAsString(Map.of(
                 "deviceId", "device-a",
@@ -131,6 +133,7 @@ class SyncControllerIntegrationTest {
     }
 
     @Test
+    @SuppressWarnings("null")
     void rejectsMissingTenantIdentifier() throws Exception {
         String pullBody = objectMapper.writeValueAsString(Map.of(
                 "deviceId", "device-a",

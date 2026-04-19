@@ -28,12 +28,21 @@ public class ResourceApplicationService {
     public ResourceApplicationService(
             BookmarkRepositoryPort bookmarkRepository,
             WorklogEntryRepositoryPort worklogEntryRepository,
-            VaultItemRepositoryPort vaultItemRepository
+            VaultItemRepositoryPort vaultItemRepository,
+            Clock clock
     ) {
         this.bookmarkRepository = bookmarkRepository;
         this.worklogEntryRepository = worklogEntryRepository;
         this.vaultItemRepository = vaultItemRepository;
-        this.clock = Clock.systemUTC();
+        this.clock = clock;
+    }
+
+    public ResourceApplicationService(
+            BookmarkRepositoryPort bookmarkRepository,
+            WorklogEntryRepositoryPort worklogEntryRepository,
+            VaultItemRepositoryPort vaultItemRepository
+    ) {
+        this(bookmarkRepository, worklogEntryRepository, vaultItemRepository, Clock.systemUTC());
     }
 
     @Transactional(readOnly = true)

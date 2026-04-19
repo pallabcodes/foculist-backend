@@ -1,8 +1,6 @@
 package com.yourorg.platform.foculist.gateway.infrastructure.grpc;
 
 import com.yourorg.platform.foculist.identity.grpc.*;
-import io.grpc.ManagedChannel;
-import io.grpc.ManagedChannelBuilder;
 import lombok.extern.slf4j.Slf4j;
 import net.devh.boot.grpc.client.inject.GrpcClient;
 import org.springframework.stereotype.Component;

@@ -18,7 +18,6 @@ import java.util.Map;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.springframework.web.server.ResponseStatusException;
@@ -66,9 +65,8 @@ public class AuthService {
 
     public LoginResult login(String tenantId, String email, String password, boolean devBypass) {
         // 1. Authenticate against the Identity Provider
-        Map<String, String> providerTokens;
         try {
-            providerTokens = identityProviderPort.authenticate(email, password);
+            identityProviderPort.authenticate(email, password);
         } catch (Exception ex) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid credentials");
         }
@@ -207,7 +205,6 @@ public class AuthService {
         }
 
         String email = claims.getSubject();
-        String userIdStr = claims.get("userId", String.class);
 
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not found"));

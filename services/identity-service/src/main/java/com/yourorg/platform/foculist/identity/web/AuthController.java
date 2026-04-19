@@ -3,7 +3,6 @@ package com.yourorg.platform.foculist.identity.web;
 import com.yourorg.platform.foculist.identity.clean.application.service.AuthService;
 import com.yourorg.platform.foculist.identity.clean.application.service.UserService;
 import com.yourorg.platform.foculist.identity.clean.adapter.out.persistence.MembershipRepository;
-import com.yourorg.platform.foculist.identity.clean.domain.model.Membership;
 import com.yourorg.platform.foculist.identity.clean.domain.model.MembershipRole;
 import com.yourorg.platform.foculist.identity.clean.domain.model.User;
 import com.yourorg.platform.foculist.tenancy.TenantContext;

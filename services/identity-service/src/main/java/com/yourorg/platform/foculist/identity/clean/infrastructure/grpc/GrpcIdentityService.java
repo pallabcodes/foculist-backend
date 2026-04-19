@@ -2,7 +2,6 @@ package com.yourorg.platform.foculist.identity.clean.infrastructure.grpc;
 
 import com.yourorg.platform.foculist.identity.grpc.*;
 import com.yourorg.platform.foculist.identity.clean.application.service.AuthService;
-import com.yourorg.platform.foculist.identity.clean.application.service.UserService;
 import com.yourorg.platform.foculist.identity.clean.infrastructure.security.JwtService;
 import io.grpc.stub.StreamObserver;
 import io.jsonwebtoken.Claims;
@@ -17,7 +16,6 @@ import java.util.List;
 @Slf4j
 public class GrpcIdentityService extends IdentityServiceGrpc.IdentityServiceImplBase {
     private final AuthService authService;
-    private final UserService userService;
     private final JwtService jwtService;
 
     @Override

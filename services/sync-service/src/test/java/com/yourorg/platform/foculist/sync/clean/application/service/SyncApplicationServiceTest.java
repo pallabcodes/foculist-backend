@@ -11,6 +11,7 @@ import com.yourorg.platform.foculist.sync.clean.domain.model.SyncDomainException
 import com.yourorg.platform.foculist.sync.clean.domain.port.SyncChangeEventRepositoryPort;
 import com.yourorg.platform.foculist.sync.clean.domain.port.SyncDeviceCursorRepositoryPort;
 import com.yourorg.platform.foculist.sync.clean.domain.port.SyncPushEnvelopeRepositoryPort;
+import com.yourorg.platform.foculist.sync.clean.domain.port.SyncRealtimeOpLogRepositoryPort;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;
@@ -36,10 +37,12 @@ class SyncApplicationServiceTest {
         SyncPushEnvelopeRepositoryPort pushEnvelopeRepository = mock(SyncPushEnvelopeRepositoryPort.class);
         SyncChangeEventRepositoryPort changeEventRepository = mock(SyncChangeEventRepositoryPort.class);
         SyncDeviceCursorRepositoryPort deviceCursorRepository = mock(SyncDeviceCursorRepositoryPort.class);
+        SyncRealtimeOpLogRepositoryPort realtimeOpLogRepository = mock(SyncRealtimeOpLogRepositoryPort.class);
         SyncApplicationService service = new SyncApplicationService(
                 pushEnvelopeRepository,
                 changeEventRepository,
                 deviceCursorRepository,
+                realtimeOpLogRepository,
                 new ObjectMapper(),
                 Clock.fixed(now, ZoneOffset.UTC)
         );
@@ -74,10 +77,12 @@ class SyncApplicationServiceTest {
         SyncPushEnvelopeRepositoryPort pushEnvelopeRepository = mock(SyncPushEnvelopeRepositoryPort.class);
         SyncChangeEventRepositoryPort changeEventRepository = mock(SyncChangeEventRepositoryPort.class);
         SyncDeviceCursorRepositoryPort deviceCursorRepository = mock(SyncDeviceCursorRepositoryPort.class);
+        SyncRealtimeOpLogRepositoryPort realtimeOpLogRepository = mock(SyncRealtimeOpLogRepositoryPort.class);
         SyncApplicationService service = new SyncApplicationService(
                 pushEnvelopeRepository,
                 changeEventRepository,
                 deviceCursorRepository,
+                realtimeOpLogRepository,
                 new ObjectMapper(),
                 Clock.fixed(now, ZoneOffset.UTC)
         );
@@ -101,10 +106,12 @@ class SyncApplicationServiceTest {
         SyncPushEnvelopeRepositoryPort pushEnvelopeRepository = mock(SyncPushEnvelopeRepositoryPort.class);
         SyncChangeEventRepositoryPort changeEventRepository = mock(SyncChangeEventRepositoryPort.class);
         SyncDeviceCursorRepositoryPort deviceCursorRepository = mock(SyncDeviceCursorRepositoryPort.class);
+        SyncRealtimeOpLogRepositoryPort realtimeOpLogRepository = mock(SyncRealtimeOpLogRepositoryPort.class);
         SyncApplicationService service = new SyncApplicationService(
                 pushEnvelopeRepository,
                 changeEventRepository,
                 deviceCursorRepository,
+                realtimeOpLogRepository,
                 new ObjectMapper(),
                 Clock.fixed(now, ZoneOffset.UTC)
         );
@@ -145,10 +152,12 @@ class SyncApplicationServiceTest {
         SyncPushEnvelopeRepositoryPort pushEnvelopeRepository = mock(SyncPushEnvelopeRepositoryPort.class);
         SyncChangeEventRepositoryPort changeEventRepository = mock(SyncChangeEventRepositoryPort.class);
         SyncDeviceCursorRepositoryPort deviceCursorRepository = mock(SyncDeviceCursorRepositoryPort.class);
+        SyncRealtimeOpLogRepositoryPort realtimeOpLogRepository = mock(SyncRealtimeOpLogRepositoryPort.class);
         SyncApplicationService service = new SyncApplicationService(
                 pushEnvelopeRepository,
                 changeEventRepository,
                 deviceCursorRepository,
+                realtimeOpLogRepository,
                 new ObjectMapper()
         );
 
@@ -162,10 +171,12 @@ class SyncApplicationServiceTest {
         SyncPushEnvelopeRepositoryPort pushEnvelopeRepository = mock(SyncPushEnvelopeRepositoryPort.class);
         SyncChangeEventRepositoryPort changeEventRepository = mock(SyncChangeEventRepositoryPort.class);
         SyncDeviceCursorRepositoryPort deviceCursorRepository = mock(SyncDeviceCursorRepositoryPort.class);
+        SyncRealtimeOpLogRepositoryPort realtimeOpLogRepository = mock(SyncRealtimeOpLogRepositoryPort.class);
         SyncApplicationService service = new SyncApplicationService(
                 pushEnvelopeRepository,
                 changeEventRepository,
                 deviceCursorRepository,
+                realtimeOpLogRepository,
                 new ObjectMapper()
         );
 

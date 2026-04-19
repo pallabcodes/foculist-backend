@@ -12,7 +12,6 @@ import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.context.annotation.Import;
 
@@ -55,12 +54,15 @@ class PlanningControllerTest {
         TaskView tv = new TaskView(
                 java.util.UUID.randomUUID(),
                 null,
+                null,
+                null,
                 "title",
                 "desc",
                 "RUNNING",
                 "HIGH",
                 Instant.parse("2026-02-01T00:00:00Z"),
-                "tenant-a"
+                "tenant-a",
+                1L
         );
         when(planningApplicationService.listTasks(Mockito.anyString(), Mockito.anyInt(), Mockito.anyInt(), Mockito.any()))
                 .thenReturn(List.of(tv));
@@ -75,12 +77,15 @@ class PlanningControllerTest {
         TaskView tv = new TaskView(
                 java.util.UUID.randomUUID(),
                 null,
+                null,
+                null,
                 "title",
                 "desc",
                 "RUNNING",
                 "HIGH",
                 Instant.parse("2026-02-01T00:00:00Z"),
-                "tenant-a"
+                "tenant-a",
+                1L
         );
         when(planningApplicationService.listTasks(Mockito.anyString(), Mockito.anyInt(), Mockito.anyInt(), Mockito.any()))
                 .thenReturn(List.of(tv));

@@ -15,7 +15,7 @@ import java.util.Map;
 import java.util.UUID;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.SQLDelete;
-import org.hibernate.annotations.Where;
+import org.hibernate.annotations.SQLRestriction;
 import org.hibernate.type.SqlTypes;
 
 @Entity
@@ -28,7 +28,7 @@ import org.hibernate.type.SqlTypes;
         }
 )
 @SQLDelete(sql = "UPDATE planning_epic SET deleted_at = NOW() WHERE id = ? AND version = ?")
-@Where(clause = "deleted_at IS NULL")
+@SQLRestriction("deleted_at IS NULL")
 public class EpicJpaEntity {
     @Id
     private UUID id;

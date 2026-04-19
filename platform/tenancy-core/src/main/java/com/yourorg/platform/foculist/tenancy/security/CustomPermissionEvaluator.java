@@ -33,12 +33,13 @@ public class CustomPermissionEvaluator implements PermissionEvaluator {
             return false;
         }
         String targetType = targetDomainObject.getClass().getSimpleName();
-        return hasPrivilege(auth, targetType, targetDomainObject.toString(), permission.toString());
+        String targetId = targetDomainObject.toString();
+        return hasPrivilege(auth, targetType, targetId, permission.toString());
     }
 
     @Override
     public boolean hasPermission(Authentication auth, Serializable targetId, String targetType, Object permission) {
-        if ((auth == null) || (targetType == null) || !(permission instanceof String)) {
+        if ((auth == null) || (targetType == null) || (targetId == null) || !(permission instanceof String)) {
             return false;
         }
         return hasPrivilege(auth, targetType, targetId.toString(), permission.toString());
@@ -59,6 +60,10 @@ public class CustomPermissionEvaluator implements PermissionEvaluator {
         }
 
         try {
+            if (identityServiceUrl == null) {
+                log.error("Identity service URL is not configured");
+                return false;
+            }
             String url = UriComponentsBuilder.fromHttpUrl(identityServiceUrl)
                     .path("/v1/grants/check")
                     .queryParam("userId", userId)

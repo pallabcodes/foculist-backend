@@ -6,9 +6,6 @@ import com.yourorg.platform.foculist.resource.clean.application.command.CreateWo
 import com.yourorg.platform.foculist.resource.clean.application.service.ResourceApplicationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.amqp.rabbit.annotation.Exchange;
-import org.springframework.amqp.rabbit.annotation.Queue;
-import org.springframework.amqp.rabbit.annotation.QueueBinding;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.stereotype.Component;
 

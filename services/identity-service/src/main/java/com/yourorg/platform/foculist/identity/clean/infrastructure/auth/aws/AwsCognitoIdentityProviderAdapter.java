@@ -10,12 +10,10 @@ import java.util.stream.Collectors;
 public class AwsCognitoIdentityProviderAdapter implements IdentityProviderPort {
 
     private final CognitoIdentityProviderClient cognitoClient;
-    private final String userPoolId;
     private final String clientId;
 
-    public AwsCognitoIdentityProviderAdapter(CognitoIdentityProviderClient cognitoClient, String userPoolId, String clientId) {
+    public AwsCognitoIdentityProviderAdapter(CognitoIdentityProviderClient cognitoClient, String clientId) {
         this.cognitoClient = cognitoClient;
-        this.userPoolId = userPoolId;
         this.clientId = clientId;
     }
 

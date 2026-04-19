@@ -47,7 +47,10 @@ class ProjectApplicationServiceTest {
                         "Unify component standards",
                         null,
                         "HIGH",
-                        "2026-02-10"
+                        "2026-02-10",
+                        null,
+                        null,
+                        null
                 )
         );
 
@@ -73,7 +76,7 @@ class ProjectApplicationServiceTest {
 
         assertThatThrownBy(() -> service.createProject(
                 "tenant-a",
-                new CreateProjectCommand("Platform Cleanup", null, null, null, "2026-01-01")
+                new CreateProjectCommand("Platform Cleanup", null, null, null, "2026-01-01", null, null, null)
         )).isInstanceOf(ProjectDomainException.class).hasMessageContaining("dueDate");
     }
 
@@ -101,21 +104,22 @@ class ProjectApplicationServiceTest {
         ProjectSettingsRepositoryPort settingsRepository = mock(ProjectSettingsRepositoryPort.class);
         ProjectApplicationService service = new ProjectApplicationService(projectRepository, settingsRepository, clock);
 
-        Project project = new Project(
-                UUID.randomUUID(),
+        Project project = Project.create(
                 "tenant-a",
                 "Platform Reliability",
                 null,
                 ProjectStatus.RUNNING,
                 ProjectPriority.MEDIUM,
                 null,
+                null,
+                null,
+                null,
                 now,
-                now,
-                0L
+                "system"
         );
         when(projectRepository.findByIdAndTenantId(project.id(), "tenant-a")).thenReturn(Optional.of(project));
         when(settingsRepository.findByProjectIdAndTenantId(project.id(), "tenant-a"))
-                .thenReturn(Optional.of(ProjectSettings.createDefault(project.id(), "tenant-a", now)));
+                .thenReturn(Optional.of(ProjectSettings.createDefault(project.id(), "tenant-a", now, "system")));
         when(settingsRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
 
         ProjectSettingsView updated = service.updateSettings(

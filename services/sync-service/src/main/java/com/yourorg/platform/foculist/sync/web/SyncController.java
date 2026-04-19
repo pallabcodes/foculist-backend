@@ -5,7 +5,6 @@ import com.yourorg.platform.foculist.sync.clean.application.command.SyncPushComm
 import com.yourorg.platform.foculist.sync.clean.application.service.SyncApplicationService;
 import com.yourorg.platform.foculist.sync.clean.application.view.SyncPullResponseView;
 import com.yourorg.platform.foculist.sync.clean.application.view.SyncPushResponseView;
-import com.yourorg.platform.foculist.tenancy.TenantContext;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import java.util.Map;

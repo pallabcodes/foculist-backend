@@ -16,8 +16,11 @@ public class JpaSyncChangeEventRepositoryAdapter implements SyncChangeEventRepos
     }
 
     @Override
+    @SuppressWarnings("null")
     public SyncChangeEvent save(SyncChangeEvent syncChangeEvent) {
-        return repository.save(SyncChangeEventJpaEntity.fromDomain(syncChangeEvent)).toDomain();
+        SyncChangeEventJpaEntity entity = SyncChangeEventJpaEntity.fromDomain(syncChangeEvent);
+        SyncChangeEventJpaEntity saved = repository.save(entity);
+        return saved.toDomain();
     }
 
     @Override

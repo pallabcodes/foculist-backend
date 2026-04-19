@@ -12,7 +12,9 @@ import reactor.core.publisher.Mono;
 @Component
 public class ReactiveTenantHeaderWebFilter implements WebFilter {
     @Override
-    public Mono<Void> filter(ServerWebExchange exchange, WebFilterChain chain) {
+    @SuppressWarnings("null")
+    @org.springframework.lang.NonNull
+    public Mono<Void> filter(@org.springframework.lang.NonNull ServerWebExchange exchange, @org.springframework.lang.NonNull WebFilterChain chain) {
         String path = exchange.getRequest().getPath().value();
         if (path.startsWith("/actuator") ||
             path.contains("/v3/api-docs") ||

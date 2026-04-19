@@ -51,6 +51,7 @@ public class LwwMergeEngine {
         return toJson(merged);
     }
 
+    @SuppressWarnings("unchecked")
     private Map<String, Object> mergeMaps(Map<String, Object> local, Map<String, Object> remote) {
         Map<String, Object> result = new LinkedHashMap<>(local);
 
@@ -85,7 +86,6 @@ public class LwwMergeEngine {
         return val instanceof Map && ((Map<?, ?>) val).containsKey("timestamp");
     }
 
-    @SuppressWarnings("unchecked")
     private LwwRegister<Object> toRegister(String field, Object raw) {
         if (raw instanceof Map<?, ?> map) {
             Object value = map.get("value");

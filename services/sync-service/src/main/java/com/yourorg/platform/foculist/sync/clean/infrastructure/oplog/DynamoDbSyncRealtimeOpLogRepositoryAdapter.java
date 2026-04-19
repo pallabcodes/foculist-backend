@@ -4,8 +4,6 @@ import com.yourorg.platform.foculist.sync.clean.domain.model.SyncRealtimeOpLogEn
 import com.yourorg.platform.foculist.sync.clean.domain.port.SyncRealtimeOpLogRepositoryPort;
 import java.time.temporal.ChronoUnit;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.stereotype.Component;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
 import software.amazon.awssdk.services.dynamodb.model.PutItemRequest;
@@ -16,8 +14,7 @@ public class DynamoDbSyncRealtimeOpLogRepositoryAdapter implements SyncRealtimeO
 
     public DynamoDbSyncRealtimeOpLogRepositoryAdapter(
             DynamoDbClient dynamoDbClient,
-            @Value("${app.sync.op-log.table:foculist_sync_op_log}") String tableName
-    ) {
+            @Value("${app.sync.op-log.table:foculist_sync_op_log}") String tableName) {
         this.dynamoDbClient = dynamoDbClient;
         this.tableName = tableName;
     }
@@ -28,15 +25,15 @@ public class DynamoDbSyncRealtimeOpLogRepositoryAdapter implements SyncRealtimeO
                 .tableName(tableName)
                 .item(java.util.Map.of(
                         "pk", AttributeValue.fromS(entry.tenantId() + "#" + entry.projectId()),
-                        "sk", AttributeValue.fromS(entry.occurredAt().truncatedTo(ChronoUnit.MILLIS) + "#" + entry.id()),
+                        "sk",
+                        AttributeValue.fromS(entry.occurredAt().truncatedTo(ChronoUnit.MILLIS) + "#" + entry.id()),
                         "tenantId", AttributeValue.fromS(entry.tenantId()),
                         "projectId", AttributeValue.fromS(entry.projectId()),
                         "deviceId", AttributeValue.fromS(entry.deviceId()),
                         "destination", AttributeValue.fromS(entry.destination()),
                         "payload", AttributeValue.fromS(entry.payload()),
                         "occurredAt", AttributeValue.fromS(entry.occurredAt().toString()),
-                        "expiresAtEpoch", AttributeValue.fromN(String.valueOf(entry.expiresAt().getEpochSecond()))
-                ))
+                        "expiresAtEpoch", AttributeValue.fromN(String.valueOf(entry.expiresAt().getEpochSecond()))))
                 .build();
         dynamoDbClient.putItem(request);
     }

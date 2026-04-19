@@ -19,7 +19,10 @@ public class JpaSyncDeviceCursorRepositoryAdapter implements SyncDeviceCursorRep
     }
 
     @Override
+    @SuppressWarnings("null")
     public SyncDeviceCursor save(SyncDeviceCursor syncDeviceCursor) {
-        return repository.save(SyncDeviceCursorJpaEntity.fromDomain(syncDeviceCursor)).toDomain();
+        SyncDeviceCursorJpaEntity entity = SyncDeviceCursorJpaEntity.fromDomain(syncDeviceCursor);
+        SyncDeviceCursorJpaEntity saved = repository.save(entity);
+        return saved.toDomain();
     }
 }

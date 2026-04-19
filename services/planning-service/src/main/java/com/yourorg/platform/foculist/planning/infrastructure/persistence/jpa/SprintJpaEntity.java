@@ -15,7 +15,7 @@ import java.time.Instant;
 import java.util.UUID;
 
 import org.hibernate.annotations.SQLDelete;
-import org.hibernate.annotations.Where;
+import org.hibernate.annotations.SQLRestriction;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 import java.util.Map;
@@ -33,7 +33,7 @@ import java.util.Map;
         }
 )
 @SQLDelete(sql = "UPDATE planning_sprint SET deleted_at = NOW() WHERE id = ? AND version = ?")
-@Where(clause = "deleted_at IS NULL")
+@SQLRestriction("deleted_at IS NULL")
 public class SprintJpaEntity {
     @Id
     private UUID id;

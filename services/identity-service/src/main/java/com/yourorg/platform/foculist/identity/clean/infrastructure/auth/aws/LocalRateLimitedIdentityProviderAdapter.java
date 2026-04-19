@@ -4,9 +4,6 @@ import com.yourorg.platform.foculist.identity.clean.domain.port.IdentityProvider
 import io.github.resilience4j.ratelimiter.RateLimiter;
 import io.github.resilience4j.ratelimiter.RateLimiterConfig;
 import io.github.resilience4j.ratelimiter.RateLimiterRegistry;
-import org.springframework.context.annotation.Profile;
-import org.springframework.stereotype.Component;
-
 import java.time.Duration;
 import java.util.Map;
 import java.util.function.Supplier;

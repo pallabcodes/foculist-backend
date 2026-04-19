@@ -34,9 +34,15 @@ class PlanningApplicationServiceTest {
         when(taskRepository.save(any(Task.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         PlanningApplicationService service = new PlanningApplicationService(
-                sprintRepository,
                 taskRepository,
+                sprintRepository,
+                mock(com.yourorg.platform.foculist.planning.domain.port.EventStoreRepositoryPort.class),
                 outboxEventRepository,
+                mock(com.yourorg.platform.foculist.planning.domain.port.TaskSnapshotJobRepositoryPort.class),
+                mock(com.yourorg.platform.foculist.planning.domain.port.BoardRepositoryPort.class),
+                mock(com.yourorg.platform.foculist.planning.domain.port.BoardColumnRepositoryPort.class),
+                mock(com.yourorg.platform.foculist.planning.domain.port.EpicRepositoryPort.class),
+                mock(com.yourorg.platform.foculist.tenancy.feature.FeatureToggleService.class),
                 new ObjectMapper(),
                 Clock.fixed(now, ZoneOffset.UTC)
         );
@@ -67,9 +73,15 @@ class PlanningApplicationServiceTest {
         when(sprintRepository.findByIdAndTenantId(sprintId, "tenant-a")).thenReturn(Optional.empty());
 
         PlanningApplicationService service = new PlanningApplicationService(
-                sprintRepository,
                 taskRepository,
+                sprintRepository,
+                mock(com.yourorg.platform.foculist.planning.domain.port.EventStoreRepositoryPort.class),
                 outboxEventRepository,
+                mock(com.yourorg.platform.foculist.planning.domain.port.TaskSnapshotJobRepositoryPort.class),
+                mock(com.yourorg.platform.foculist.planning.domain.port.BoardRepositoryPort.class),
+                mock(com.yourorg.platform.foculist.planning.domain.port.BoardColumnRepositoryPort.class),
+                mock(com.yourorg.platform.foculist.planning.domain.port.EpicRepositoryPort.class),
+                mock(com.yourorg.platform.foculist.tenancy.feature.FeatureToggleService.class),
                 new ObjectMapper(),
                 Clock.systemUTC()
         );
@@ -87,9 +99,15 @@ class PlanningApplicationServiceTest {
         TaskRepositoryPort taskRepository = mock(TaskRepositoryPort.class);
         OutboxEventRepositoryPort outboxEventRepository = mock(OutboxEventRepositoryPort.class);
         PlanningApplicationService service = new PlanningApplicationService(
-                sprintRepository,
                 taskRepository,
+                sprintRepository,
+                mock(com.yourorg.platform.foculist.planning.domain.port.EventStoreRepositoryPort.class),
                 outboxEventRepository,
+                mock(com.yourorg.platform.foculist.planning.domain.port.TaskSnapshotJobRepositoryPort.class),
+                mock(com.yourorg.platform.foculist.planning.domain.port.BoardRepositoryPort.class),
+                mock(com.yourorg.platform.foculist.planning.domain.port.BoardColumnRepositoryPort.class),
+                mock(com.yourorg.platform.foculist.planning.domain.port.EpicRepositoryPort.class),
+                mock(com.yourorg.platform.foculist.tenancy.feature.FeatureToggleService.class),
                 new ObjectMapper(),
                 Clock.systemUTC()
         );

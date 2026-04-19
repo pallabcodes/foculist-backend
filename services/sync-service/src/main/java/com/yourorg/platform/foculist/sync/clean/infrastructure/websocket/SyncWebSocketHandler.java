@@ -5,8 +5,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.yourorg.platform.foculist.sync.clean.application.command.SyncPullCommand;
 import com.yourorg.platform.foculist.sync.clean.application.command.SyncPushCommand;
 import com.yourorg.platform.foculist.sync.clean.application.service.SyncApplicationService;
-import com.yourorg.platform.foculist.sync.clean.application.view.SyncPullResponseView;
-import com.yourorg.platform.foculist.sync.clean.application.view.SyncPushResponseView;
 import java.time.Instant;
 import java.util.Map;
 import org.slf4j.Logger;
@@ -38,9 +36,10 @@ public class SyncWebSocketHandler implements WebSocketHandler {
     }
 
     @Override
-    public Mono<Void> handle(WebSocketSession session) {
+    @SuppressWarnings("null")
+    @org.springframework.lang.NonNull
+    public Mono<Void> handle(@org.springframework.lang.NonNull WebSocketSession session) {
         String tenantId = getTenantId(session);
-        String userId = getUserId(session);
         
         sessionRegistry.register(tenantId, session);
         
@@ -67,6 +66,7 @@ public class SyncWebSocketHandler implements WebSocketHandler {
         }
     }
 
+    @SuppressWarnings("null")
     private Mono<Void> handlePush(WebSocketSession session, JsonNode json) throws Exception {
         String tenantId = getTenantId(session);
         String deviceId = json.has("deviceId") ? json.get("deviceId").asText() : session.getId();
@@ -115,6 +115,7 @@ public class SyncWebSocketHandler implements WebSocketHandler {
                 });
     }
 
+    @SuppressWarnings("null")
     private Mono<Void> handlePull(WebSocketSession session, JsonNode json) throws Exception {
         String tenantId = getTenantId(session);
         String deviceId = json.has("deviceId") ? json.get("deviceId").asText() : session.getId();
@@ -139,6 +140,7 @@ public class SyncWebSocketHandler implements WebSocketHandler {
                 });
     }
 
+    @SuppressWarnings("null")
     private Mono<Void> handlePing(WebSocketSession session) throws Exception {
         String pong = objectMapper.writeValueAsString(Map.of(
                 "type", "pong",
@@ -147,6 +149,7 @@ public class SyncWebSocketHandler implements WebSocketHandler {
         return session.send(Mono.just(session.textMessage(pong)));
     }
 
+    @SuppressWarnings("null")
     private Mono<Void> sendError(WebSocketSession session, String errorMessage) {
         try {
             String error = objectMapper.writeValueAsString(Map.of(
@@ -163,10 +166,5 @@ public class SyncWebSocketHandler implements WebSocketHandler {
     private String getTenantId(WebSocketSession session) {
         Object tenantId = session.getAttributes().get("tenantId");
         return tenantId != null ? tenantId.toString() : "public";
-    }
-
-    private String getUserId(WebSocketSession session) {
-        Object userId = session.getAttributes().get("userId");
-        return userId != null ? userId.toString() : "anonymous";
     }
 }

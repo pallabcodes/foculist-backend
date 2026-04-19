@@ -2,7 +2,6 @@ package com.yourorg.platform.foculist.identity.web;
 
 import com.yourorg.platform.foculist.identity.clean.adapter.out.persistence.OrganizationRepository;
 import com.yourorg.platform.foculist.identity.clean.adapter.out.persistence.UserRepository;
-import com.yourorg.platform.foculist.identity.clean.domain.model.Organization;
 import com.yourorg.platform.foculist.identity.clean.domain.model.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;

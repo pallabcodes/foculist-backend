@@ -36,8 +36,9 @@ public class MeetingOutboxProcessor {
         log.info("Processing {} pending meeting outbox events", pendingEvents.size());
 
         for (MeetingOutboxEventJpaEntity event : pendingEvents) {
+            @SuppressWarnings("null")
             Span span = tracer.spanBuilder("process-outbox-event")
-                    .setAttribute("event.id", event.getId())
+                    .setAttribute("event.id", event.getId().toString())
                     .setAttribute("event.type", event.getEventType())
                     .startSpan();
 

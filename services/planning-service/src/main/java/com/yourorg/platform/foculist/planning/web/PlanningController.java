@@ -31,8 +31,6 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestHeader;
 import java.util.UUID;
-import java.util.List;
-import java.util.Map;
 import org.springframework.security.access.prepost.PreAuthorize;
 
 @RestController
@@ -42,7 +40,8 @@ public class PlanningController {
     private final PlanningApplicationService planningApplicationService;
     private final TaskResponseMapperRegistry taskResponseMapperRegistry;
 
-    public PlanningController(PlanningApplicationService planningApplicationService, TaskResponseMapperRegistry taskResponseMapperRegistry) {
+    public PlanningController(PlanningApplicationService planningApplicationService,
+            TaskResponseMapperRegistry taskResponseMapperRegistry) {
         this.planningApplicationService = planningApplicationService;
         this.taskResponseMapperRegistry = taskResponseMapperRegistry;
     }
@@ -51,8 +50,7 @@ public class PlanningController {
     @GetMapping("/sprints")
     public List<SprintView> listSprints(
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "50") int size
-    ) {
+            @RequestParam(defaultValue = "50") int size) {
         int boundedSize = Math.min(Math.max(size, 1), 200);
         int boundedPage = Math.max(page, 0);
         return planningApplicationService.listSprints(TenantContext.require(), boundedPage, boundedSize);
@@ -73,9 +71,7 @@ public class PlanningController {
                         request.description(),
                         request.status(),
                         request.priority(),
-                        request.sprintId()
-                )
-        );
+                        request.sprintId()));
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
@@ -85,11 +81,11 @@ public class PlanningController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "50") int size,
             @RequestParam(required = false) String after,
-            @RequestHeader(value = "Accept-Version", required = false) String version
-    ) {
+            @RequestHeader(value = "Accept-Version", required = false) String version) {
         int boundedSize = Math.min(Math.max(size, 1), 200);
         int boundedPage = Math.max(page, 0);
-        List<TaskView> tasks = planningApplicationService.listTasks(TenantContext.require(), boundedPage, boundedSize, after);
+        List<TaskView> tasks = planningApplicationService.listTasks(TenantContext.require(), boundedPage, boundedSize,
+                after);
         boolean hasMore = tasks.size() == boundedSize;
         String nextCursor = hasMore ? buildCursor(tasks.get(tasks.size() - 1)) : null;
         String requestId = resolveRequestId();
@@ -118,7 +114,8 @@ public class PlanningController {
 
     @PreAuthorize("hasPermission(#taskId, 'Task', 'WRITE')")
     @PutMapping("/tasks/{taskId}")
-    public ResponseEntity<TaskView> updateTask(@PathVariable UUID taskId, @Valid @RequestBody UpdateTaskRequest request) {
+    public ResponseEntity<TaskView> updateTask(@PathVariable UUID taskId,
+            @Valid @RequestBody UpdateTaskRequest request) {
         TaskView updated = planningApplicationService.updateTask(
                 TenantContext.require(),
                 taskId,
@@ -126,16 +123,16 @@ public class PlanningController {
                         request.sprintId(),
                         request.title(),
                         request.description(),
-                        request.priority()
-                )
-        );
+                        request.priority()));
         return ResponseEntity.ok(updated);
     }
 
     @PreAuthorize("hasPermission(#taskId, 'Task', 'WRITE')")
     @PatchMapping("/tasks/{taskId}/status")
-    public ResponseEntity<TaskView> updateTaskStatus(@PathVariable UUID taskId, @Valid @RequestBody UpdateTaskStatusRequest request) {
-        return ResponseEntity.ok(planningApplicationService.updateTaskStatus(TenantContext.require(), taskId, request.status()));
+    public ResponseEntity<TaskView> updateTaskStatus(@PathVariable UUID taskId,
+            @Valid @RequestBody UpdateTaskStatusRequest request) {
+        return ResponseEntity
+                .ok(planningApplicationService.updateTaskStatus(TenantContext.require(), taskId, request.status()));
     }
 
     @PreAuthorize("hasPermission(#taskId, 'Task', 'ADMIN')")
@@ -152,24 +149,21 @@ public class PlanningController {
                 new com.yourorg.platform.foculist.planning.application.CreateSprintCommand(
                         request.name(),
                         request.startDate(),
-                        request.endDate()
-                )
-        );
+                        request.endDate()));
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
     @PreAuthorize("hasPermission(#sprintId, 'Sprint', 'WRITE')")
     @PutMapping("/sprints/{sprintId}")
-    public ResponseEntity<SprintView> updateSprint(@PathVariable UUID sprintId, @Valid @RequestBody CreateSprintRequest request) {
+    public ResponseEntity<SprintView> updateSprint(@PathVariable UUID sprintId,
+            @Valid @RequestBody CreateSprintRequest request) {
         SprintView updated = planningApplicationService.updateSprint(
                 TenantContext.require(),
                 sprintId,
                 new com.yourorg.platform.foculist.planning.application.CreateSprintCommand(
                         request.name(),
                         request.startDate(),
-                        request.endDate()
-                )
-        );
+                        request.endDate()));
         return ResponseEntity.ok(updated);
     }
 
@@ -184,8 +178,7 @@ public class PlanningController {
     public List<BoardView> listBoards(
             @RequestParam(required = false) UUID projectId,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "50") int size
-    ) {
+            @RequestParam(defaultValue = "50") int size) {
         return planningApplicationService.listBoards(TenantContext.require(), projectId, page, size);
     }
 
@@ -193,8 +186,7 @@ public class PlanningController {
     public ResponseEntity<BoardView> createBoard(@Valid @RequestBody CreateBoardRequest request) {
         BoardView created = planningApplicationService.createBoard(
                 TenantContext.require(),
-                new CreateBoardCommand(request.projectId(), request.name(), request.type())
-        );
+                new CreateBoardCommand(request.projectId(), request.name(), request.type()));
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
@@ -204,12 +196,12 @@ public class PlanningController {
     }
 
     @PostMapping("/boards/{boardId}/columns")
-    public ResponseEntity<BoardColumnView> createBoardColumn(@PathVariable UUID boardId, @Valid @RequestBody CreateBoardColumnRequest request) {
+    public ResponseEntity<BoardColumnView> createBoardColumn(@PathVariable UUID boardId,
+            @Valid @RequestBody CreateBoardColumnRequest request) {
         BoardColumnView created = planningApplicationService.createBoardColumn(
                 TenantContext.require(),
                 boardId,
-                new CreateBoardColumnCommand(request.name(), request.statusMapping(), request.orderIndex())
-        );
+                new CreateBoardColumnCommand(request.name(), request.statusMapping(), request.orderIndex()));
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
@@ -217,8 +209,7 @@ public class PlanningController {
     public List<EpicView> listEpics(
             @RequestParam(required = false) UUID projectId,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "50") int size
-    ) {
+            @RequestParam(defaultValue = "50") int size) {
         return planningApplicationService.listEpics(TenantContext.require(), projectId, page, size);
     }
 
@@ -226,25 +217,27 @@ public class PlanningController {
     public ResponseEntity<EpicView> createEpic(@Valid @RequestBody CreateEpicRequest request) {
         EpicView created = planningApplicationService.createEpic(
                 TenantContext.require(),
-                new CreateEpicCommand(request.projectId(), request.name(), request.summary(), request.color(), request.startDate(), request.targetDate())
-        );
+                new CreateEpicCommand(request.projectId(), request.name(), request.summary(), request.color(),
+                        request.startDate(), request.targetDate()));
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
     @PreAuthorize("hasPermission(#taskId, 'Task', 'WRITE')")
     @PutMapping("/tasks/{taskId}/planning")
-    public ResponseEntity<TaskView> updateTaskPlanning(@PathVariable UUID taskId, @Valid @RequestBody UpdateTaskPlanningRequest request) {
+    public ResponseEntity<TaskView> updateTaskPlanning(@PathVariable UUID taskId,
+            @Valid @RequestBody UpdateTaskPlanningRequest request) {
         TaskView updated = planningApplicationService.updateTaskPlanning(
                 TenantContext.require(),
                 taskId,
-                new UpdateTaskPlanningCommand(request.sprintId(), request.epicId(), request.boardColumnId())
-        );
+                new UpdateTaskPlanningCommand(request.sprintId(), request.epicId(), request.boardColumnId()));
         return ResponseEntity.ok(updated);
     }
 
     @PutMapping("/boards/{boardId}")
-    public ResponseEntity<BoardView> updateBoard(@PathVariable UUID boardId, @Valid @RequestBody UpdateBoardRequest request) {
-        return ResponseEntity.ok(planningApplicationService.updateBoard(TenantContext.require(), boardId, request.name()));
+    public ResponseEntity<BoardView> updateBoard(@PathVariable UUID boardId,
+            @Valid @RequestBody UpdateBoardRequest request) {
+        return ResponseEntity
+                .ok(planningApplicationService.updateBoard(TenantContext.require(), boardId, request.name()));
     }
 
     @DeleteMapping("/boards/{boardId}")
@@ -254,8 +247,10 @@ public class PlanningController {
     }
 
     @PutMapping("/boards/{boardId}/columns/{columnId}")
-    public ResponseEntity<BoardColumnView> updateBoardColumn(@PathVariable UUID boardId, @PathVariable UUID columnId, @Valid @RequestBody UpdateBoardColumnRequest request) {
-        return ResponseEntity.ok(planningApplicationService.updateBoardColumn(TenantContext.require(), columnId, request.name(), request.orderIndex()));
+    public ResponseEntity<BoardColumnView> updateBoardColumn(@PathVariable UUID boardId, @PathVariable UUID columnId,
+            @Valid @RequestBody UpdateBoardColumnRequest request) {
+        return ResponseEntity.ok(planningApplicationService.updateBoardColumn(TenantContext.require(), columnId,
+                request.name(), request.orderIndex()));
     }
 
     @DeleteMapping("/boards/{boardId}/columns/{columnId}")
@@ -265,8 +260,10 @@ public class PlanningController {
     }
 
     @PutMapping("/epics/{epicId}")
-    public ResponseEntity<EpicView> updateEpic(@PathVariable UUID epicId, @Valid @RequestBody UpdateEpicRequest request) {
-        return ResponseEntity.ok(planningApplicationService.updateEpic(TenantContext.require(), epicId, request.name(), request.summary(), request.color(), request.status()));
+    public ResponseEntity<EpicView> updateEpic(@PathVariable UUID epicId,
+            @Valid @RequestBody UpdateEpicRequest request) {
+        return ResponseEntity.ok(planningApplicationService.updateEpic(TenantContext.require(), epicId, request.name(),
+                request.summary(), request.color(), request.status()));
     }
 
     @DeleteMapping("/epics/{epicId}")
@@ -280,38 +277,36 @@ public class PlanningController {
             String description,
             String status,
             String priority,
-            String sprintId
-    ) {
+            String sprintId) {
     }
 
     public record UpdateTaskRequest(
             @NotBlank String title,
             String description,
             String priority,
-            String sprintId
-    ) {
+            String sprintId) {
     }
 
-    public record UpdateTaskStatusRequest(@NotBlank String status) {}
+    public record UpdateTaskStatusRequest(@NotBlank String status) {
+    }
 
     public record CreateSprintRequest(
             @NotBlank String name,
             @NotBlank String startDate,
-            @NotBlank String endDate
-    ) {
+            @NotBlank String endDate) {
     }
 
     public record CreateBoardRequest(
             UUID projectId,
             @NotBlank String name,
-            @NotBlank String type
-    ) {}
+            @NotBlank String type) {
+    }
 
     public record CreateBoardColumnRequest(
             @NotBlank String name,
             String statusMapping,
-            Integer orderIndex
-    ) {}
+            Integer orderIndex) {
+    }
 
     public record CreateEpicRequest(
             UUID projectId,
@@ -319,23 +314,25 @@ public class PlanningController {
             String summary,
             String color,
             String startDate,
-            String targetDate
-    ) {}
+            String targetDate) {
+    }
 
     public record UpdateTaskPlanningRequest(
             String sprintId,
             String epicId,
-            String boardColumnId
-    ) {}
+            String boardColumnId) {
+    }
 
-    public record UpdateBoardRequest(@NotBlank String name) {}
+    public record UpdateBoardRequest(@NotBlank String name) {
+    }
 
-    public record UpdateBoardColumnRequest(String name, Integer orderIndex) {}
+    public record UpdateBoardColumnRequest(String name, Integer orderIndex) {
+    }
 
     public record UpdateEpicRequest(
             String name,
             String summary,
             String color,
-            String status
-    ) {}
+            String status) {
+    }
 }

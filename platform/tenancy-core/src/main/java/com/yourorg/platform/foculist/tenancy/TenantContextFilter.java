@@ -23,7 +23,7 @@ public class TenantContextFilter extends OncePerRequestFilter {
     }
 
     @Override
-    protected boolean shouldNotFilter(HttpServletRequest request) {
+    protected boolean shouldNotFilter(@org.springframework.lang.NonNull HttpServletRequest request) {
         String path = request.getRequestURI();
         return (properties.isSkipActuator() && path.startsWith("/actuator")) ||
                path.contains("/v3/api-docs") ||
@@ -31,7 +31,10 @@ public class TenantContextFilter extends OncePerRequestFilter {
     }
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
+    protected void doFilterInternal(
+            @org.springframework.lang.NonNull HttpServletRequest request,
+            @org.springframework.lang.NonNull HttpServletResponse response,
+            @org.springframework.lang.NonNull FilterChain filterChain)
             throws ServletException, IOException {
         try {
             String tenantId = tenantResolver.resolve(

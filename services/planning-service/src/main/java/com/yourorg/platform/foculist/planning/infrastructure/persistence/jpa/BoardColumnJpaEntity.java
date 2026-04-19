@@ -10,7 +10,7 @@ import jakarta.persistence.Version;
 import java.time.Instant;
 import java.util.UUID;
 import org.hibernate.annotations.SQLDelete;
-import org.hibernate.annotations.Where;
+import org.hibernate.annotations.SQLRestriction;
 
 @Entity
 @Table(
@@ -21,7 +21,7 @@ import org.hibernate.annotations.Where;
         }
 )
 @SQLDelete(sql = "UPDATE planning_board_column SET deleted_at = NOW() WHERE id = ? AND version = ?")
-@Where(clause = "deleted_at IS NULL")
+@SQLRestriction("deleted_at IS NULL")
 public class BoardColumnJpaEntity {
     @Id
     private UUID id;

@@ -3,25 +3,19 @@ package com.yourorg.platform.foculist.identity.clean.domain.model;
 import jakarta.persistence.*;
 import java.time.OffsetDateTime;
 import java.util.UUID;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import java.util.Map;
+
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
-
 import org.hibernate.annotations.SQLDelete;
-import org.hibernate.annotations.Where;
+import org.hibernate.annotations.SQLRestriction;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
-import java.util.Map;
 
 @Entity
 @Table(name = "organizations")
-@Getter
-@Setter
-@NoArgsConstructor
 @SQLDelete(sql = "UPDATE organizations SET deleted_at = NOW() WHERE id = ? AND version = ?")
-@Where(clause = "deleted_at IS NULL")
+@SQLRestriction("deleted_at IS NULL")
 public class Organization {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
@@ -65,4 +59,45 @@ public class Organization {
     @UpdateTimestamp
     @Column(name = "updated_at")
     private OffsetDateTime updatedAt;
+
+    public Organization() {}
+
+    public UUID getId() { return id; }
+    public void setId(UUID id) { this.id = id; }
+
+    public Integer getVersion() { return version; }
+    public void setVersion(Integer version) { this.version = version; }
+
+    public String getTenantId() { return tenantId; }
+    public void setTenantId(String tenantId) { this.tenantId = tenantId; }
+
+    public String getSlug() { return slug; }
+    public void setSlug(String slug) { this.slug = slug; }
+
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
+
+    public String getTier() { return tier; }
+    public void setTier(String tier) { this.tier = tier; }
+
+    public String getDedicatedSchemaName() { return dedicatedSchemaName; }
+    public void setDedicatedSchemaName(String dedicatedSchemaName) { this.dedicatedSchemaName = dedicatedSchemaName; }
+
+    public String getCreatedBy() { return createdBy; }
+    public void setCreatedBy(String createdBy) { this.createdBy = createdBy; }
+
+    public String getUpdatedBy() { return updatedBy; }
+    public void setUpdatedBy(String updatedBy) { this.updatedBy = updatedBy; }
+
+    public Map<String, Object> getMetadata() { return metadata; }
+    public void setMetadata(Map<String, Object> metadata) { this.metadata = metadata; }
+
+    public OffsetDateTime getDeletedAt() { return deletedAt; }
+    public void setDeletedAt(OffsetDateTime deletedAt) { this.deletedAt = deletedAt; }
+
+    public OffsetDateTime getCreatedAt() { return createdAt; }
+    public void setCreatedAt(OffsetDateTime createdAt) { this.createdAt = createdAt; }
+
+    public OffsetDateTime getUpdatedAt() { return updatedAt; }
+    public void setUpdatedAt(OffsetDateTime updatedAt) { this.updatedAt = updatedAt; }
 }

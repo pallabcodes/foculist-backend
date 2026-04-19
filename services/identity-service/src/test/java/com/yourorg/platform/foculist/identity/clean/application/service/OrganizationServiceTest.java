@@ -69,7 +69,7 @@ class OrganizationServiceTest {
         when(userRepository.findByIdAndTenantId(userId, "test-tenant")).thenReturn(Optional.of(mockUser));
         when(organizationRepository.save(any(Organization.class))).thenAnswer(i -> i.getArgument(0));
 
-        Organization result = organizationService.createOrganization("Test Org", "test-slug", userId);
+        Organization result = organizationService.createOrganization("Test Org", "test-slug", userId, null);
 
         assertNotNull(result);
         assertEquals("Test Org", result.getName());

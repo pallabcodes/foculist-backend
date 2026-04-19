@@ -21,7 +21,7 @@ public class WorkspaceEventListener {
         try {
             String tenantId = (String) messagePayload.get("tenantId");
             String workspaceName = (String) messagePayload.get("name");
-            log.info("Received workspace.created for tenant: {}. Auto-provisioning default Project structure...", tenantId);
+            log.info("Received workspace.created for tenant: {} (workspace: {}). Auto-provisioning default Project structure...", tenantId, workspaceName);
         } catch (Exception e) {
             log.error("Failed to process workspace event in project service", e);
         }

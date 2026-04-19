@@ -9,8 +9,6 @@ import com.yourorg.platform.foculist.identity.clean.domain.model.Organization;
 import com.yourorg.platform.foculist.identity.clean.domain.model.User;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.List;
-import java.util.ArrayList;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
@@ -236,8 +234,8 @@ public class DataInitializer implements CommandLineRunner {
         UUID t3 = seedTask(tenant, sprint1Id, "Life Support Testing", "Run full-duration life support tests in simulated Mars atmosphere.", "IN_PROGRESS", "HIGH", qa.getId(), lead.getId(), 13, "MARS-3", tsNow);
         UUID t4 = seedTask(tenant, sprint1Id, "Communication Array Setup", "Deploy and test high-gain antenna for Earth-Mars relay.", "DONE", "MEDIUM", dev1.getId(), lead.getId(), 3, "MARS-4", tsNow);
         UUID t5 = seedTask(tenant, sprint2Id, "Thermal Shield Analysis", "Model re-entry thermal profiles for Martian atmosphere.", "TODO", "HIGH", dev2.getId(), lead.getId(), 8, "MARS-5", tsNow);
-        UUID t6 = seedTask(tenant, sprint2Id, "Fuel Cell Efficiency Report", "Document fuel cell performance under sustained load.", "TODO", "MEDIUM", dev1.getId(), lead.getId(), 5, "MARS-6", tsNow);
-        UUID t7 = seedTask(tenant, sprint3Id, "Crew Rotation Protocol", "Design shift schedules for 6-month deep space transit.", "TODO", "LOW", qa.getId(), lead.getId(), 3, "MARS-7", tsNow);
+        seedTask(tenant, sprint2Id, "Fuel Cell Efficiency Report", "Document fuel cell performance under sustained load.", "TODO", "MEDIUM", dev1.getId(), lead.getId(), 5, "MARS-6", tsNow);
+        seedTask(tenant, sprint3Id, "Crew Rotation Protocol", "Design shift schedules for 6-month deep space transit.", "TODO", "LOW", qa.getId(), lead.getId(), 3, "MARS-7", tsNow);
         UUID t8 = seedTask(tenant, null, "Research: Radiation Shielding", "Investigate novel materials for cosmic radiation protection.", "BACKLOG", "MEDIUM", null, lead.getId(), 13, "MARS-8", tsNow);
 
         // ============================================================
@@ -245,7 +243,7 @@ public class DataInitializer implements CommandLineRunner {
         // ============================================================
         log.info("🏷️ Seeding Labels...");
 
-        UUID bugLabel = seedLabel(tenant, "Bug", "#EF4444", "Defects and issues");
+        seedLabel(tenant, "Bug", "#EF4444", "Defects and issues");
         UUID featureLabel = seedLabel(tenant, "Feature", "#3B82F6", "New functionality");
         UUID urgentLabel = seedLabel(tenant, "Urgent", "#F97316", "Time-sensitive items");
         UUID researchLabel = seedLabel(tenant, "Research", "#8B5CF6", "Investigation and exploration");
