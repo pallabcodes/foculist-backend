@@ -26,11 +26,32 @@ public class MeetingApplicationService {
     private static final Pattern SPLIT_PATTERN = Pattern.compile("[\\n\\r\\.]+");
 
     private final MeetingSummaryRepositoryPort summaryRepository;
-    private final Clock clock;
+            private final Clock clock;
 
-    public MeetingApplicationService(MeetingSummaryRepositoryPort summaryRepository) {
+    private final com.yourorg.platform.foculist.meeting.clean.domain.port.MeetingOutboxEventRepositoryPort outboxRepository;
+
+    public MeetingApplicationService(
+            MeetingSummaryRepositoryPort summaryRepository,
+            com.yourorg.platform.foculist.meeting.clean.domain.port.MeetingOutboxEventRepositoryPort outboxRepository) {
         this.summaryRepository = summaryRepository;
+        this.outboxRepository = outboxRepository;
         this.clock = Clock.systemUTC();
+    }
+
+    @Transactional
+    public void promoteTask(String tenantId, String meetingId, String title, String priority) {
+        String payload = String.format("{\"tenantId\":\"%s\", \"title\":\"%s\", \"description\":\"Promoted from meeting: %s\", \"priority\":\"%s\"}", tenantId, title, meetingId, priority);
+        outboxRepository.save(com.yourorg.platform.foculist.meeting.clean.domain.model.MeetingOutboxEvent.create(
+                tenantId, "Meeting", java.util.UUID.randomUUID(), "TASK_PROMOTED", payload
+        ));
+    }
+
+    @Transactional
+    public void promoteWorklog(String tenantId, String meetingId, String taskTitle, int durationMinutes) {
+        String payload = String.format("{\"tenantId\":\"%s\", \"project\":\"meeting-project\", \"task\":\"%s (from meeting: %s)\", \"durationMinutes\":%d}", tenantId, taskTitle, meetingId, durationMinutes);
+        outboxRepository.save(com.yourorg.platform.foculist.meeting.clean.domain.model.MeetingOutboxEvent.create(
+                tenantId, "Meeting", java.util.UUID.randomUUID(), "WORKLOG_PROMOTED", payload
+        ));
     }
 
     @Transactional(readOnly = true)

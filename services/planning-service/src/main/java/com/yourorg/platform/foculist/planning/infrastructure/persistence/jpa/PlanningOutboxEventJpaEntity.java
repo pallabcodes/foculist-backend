@@ -13,6 +13,9 @@ import jakarta.persistence.Version;
 import java.time.Instant;
 import java.util.UUID;
 
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
+
 @Entity
 @Table(
         name = "planning_outbox_event",
@@ -38,6 +41,7 @@ public class PlanningOutboxEventJpaEntity {
     @Column(name = "event_type", nullable = false, length = 128)
     private String eventType;
 
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "payload", nullable = false, columnDefinition = "jsonb")
     private String payload;
 

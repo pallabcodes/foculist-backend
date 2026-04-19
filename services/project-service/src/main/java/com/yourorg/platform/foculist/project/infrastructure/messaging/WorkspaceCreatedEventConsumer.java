@@ -5,6 +5,7 @@ import com.yourorg.platform.foculist.project.application.ProjectApplicationServi
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
+import io.awspring.cloud.sqs.annotation.SqsListener;
 import org.springframework.stereotype.Component;
 
 import java.util.Map;
@@ -18,9 +19,18 @@ public class WorkspaceCreatedEventConsumer {
     private final ProjectApplicationService projectApplicationService;
 
     @RabbitListener(queues = RabbitConfig.QUEUE_NAME)
-    public void handleWorkspaceCreated(Map<String, Object> payload) {
-        log.info("📥 Received WORKSPACE_CREATED Event: {}", payload);
+    public void handleRabbitWorkspaceCreated(Map<String, Object> payload) {
+        log.info("📥 [RabbitMQ] Received WORKSPACE_CREATED Event: {}", payload);
+        processEvent(payload);
+    }
 
+    @SqsListener("${app.aws.sqs.queue.name:foculist.automation.jobs}")
+    public void handleSqsWorkspaceCreated(Map<String, Object> payload) {
+        log.info("📥 [SQS] Received WORKSPACE_CREATED Event: {}", payload);
+        processEvent(payload);
+    }
+
+    private void processEvent(Map<String, Object> payload) {
         try {
             String tenantId = (String) payload.get("tenantId");
             String projectName = (String) payload.get("projectName");
@@ -50,9 +60,8 @@ public class WorkspaceCreatedEventConsumer {
             log.info("✅ Default Project created successfully for Tenant: '{}'", tenantId);
 
         } catch (Exception e) {
-            log.error("❌ Failed to process WorkspaceCreatedEvent", e);
-            // In production, you might want to throw to trigger RabbitMQ retry/DLQ, 
-            // but for now, we catch to prevent Infinite Loops if payload is corrupt.
+            log.error("❌ Failed to process WorkspaceCreatedEvent. Routing to DLQ.", e);
+            throw new RuntimeException("Re-throwing for DLQ routing", e);
         }
     }
 }

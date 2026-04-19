@@ -35,7 +35,7 @@ public class SecurityConfig {
     @Value("${identity.provider:keycloak}")
     private String identityProvider;
 
-    @Value("${JWT_ISSUER_URI:http://keycloak:8080/realms/foculist}")
+    @Value("${JWT_ISSUER_URI:http://localhost:9080/realms/foculist}")
     private String issuerUri;
 
     @Value("${identity.cors.allowed-origins:http://localhost:3000}")

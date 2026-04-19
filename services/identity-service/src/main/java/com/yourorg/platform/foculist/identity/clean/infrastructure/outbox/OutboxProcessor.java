@@ -60,4 +60,15 @@ public class OutboxProcessor {
             }
         }
     }
+
+    @Scheduled(cron = "0 0 2 * * *") // Daily at 2:00 AM
+    @Transactional
+    public void purgeProcessedEvents() {
+        OffsetDateTime threshold = OffsetDateTime.now().minusDays(7);
+        log.info("OutboxProcessor: Purging processed events older than 7 days (before {})", threshold);
+        int deleted = outboxEventRepository.deleteByStatusAndCreatedAtBefore("COMPLETED", threshold);
+        if (deleted > 0) {
+            log.info("OutboxProcessor: Successfully purged {} processed events", deleted);
+        }
+    }
 }

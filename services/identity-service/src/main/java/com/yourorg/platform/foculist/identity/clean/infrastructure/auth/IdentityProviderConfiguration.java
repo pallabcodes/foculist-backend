@@ -27,7 +27,7 @@ public class IdentityProviderConfiguration {
     @Value("${app.aws.cognito.endpointOverride:}")
     private String endpointOverride;
 
-    @Value("${keycloak.server-url:http://localhost:9090}")
+    @Value("${keycloak.server-url:http://localhost:9080}")
     private String keycloakUrl;
     
     @Value("${keycloak.realm:foculist}")

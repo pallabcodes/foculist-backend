@@ -22,6 +22,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 
 @AutoConfiguration
 @EnableConfigurationProperties(TenantContextProperties.class)
+@org.springframework.context.annotation.Import(com.yourorg.platform.foculist.tenancy.feature.FeatureToggleService.class)
 public class TenancyAutoConfiguration {
 
     @Bean
@@ -29,6 +30,11 @@ public class TenancyAutoConfiguration {
     public RestTemplate tenancyRestTemplate(org.springframework.beans.factory.ObjectProvider<RestTemplateBuilder> builderProvider) {
         RestTemplateBuilder builder = builderProvider.getIfAvailable();
         return builder != null ? builder.build() : new RestTemplate();
+    }
+
+    @Bean
+    public io.github.resilience4j.ratelimiter.RateLimiterRegistry tenancyRateLimiterRegistry() {
+        return io.github.resilience4j.ratelimiter.RateLimiterRegistry.ofDefaults();
     }
 
     @Bean

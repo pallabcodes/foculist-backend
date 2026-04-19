@@ -255,6 +255,8 @@ services:
       OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4318
       MANAGEMENT_OTLP_TRACING_ENDPOINT: http://otel-collector:4318/v1/traces
       MONGODB_URI: mongodb://mongodb:27017/foculist_meeting-service
+      APP_IDENTITY_URL: http://identity-service:8081
+      SPRING_RABBITMQ_HOST: rabbitmq
     ports:
       - "8085:8085"
     depends_on:
@@ -263,6 +265,8 @@ services:
       mongodb:
         condition: service_started
       redis:
+        condition: service_started
+      rabbitmq:
         condition: service_started
 
   resource-service:
@@ -285,6 +289,8 @@ services:
       OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4318
       MANAGEMENT_OTLP_TRACING_ENDPOINT: http://otel-collector:4318/v1/traces
       MONGODB_URI: mongodb://mongodb:27017/foculist_resource-service
+      APP_IDENTITY_URL: http://identity-service:8081
+      SPRING_RABBITMQ_HOST: rabbitmq
     ports:
       - "8087:8087"
     depends_on:
@@ -293,6 +299,8 @@ services:
       mongodb:
         condition: service_started
       redis:
+        condition: service_started
+      rabbitmq:
         condition: service_started
 
   # Observability Stack

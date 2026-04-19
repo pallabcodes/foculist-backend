@@ -1,0 +1,41 @@
+# Default values for Foculist Platform
+global:
+  image:
+    tag: "latest"
+    pullPolicy: IfNotPresent
+  aws:
+    region: "us-east-1"
+    endpoint: "http://localstack:4566"
+  otel:
+    otlpEndpoint: "http://otel-collector:4318/v1/traces"
+  rabbitmq:
+    host: "rabbitmq"
+    port: 5672
+
+# Service Defaults
+serviceDefaults:
+  replicaCount: 1
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 100m
+      memory: 256Mi
+  livenessProbe:
+    path: /actuator/health/liveness
+    initialDelaySeconds: 30
+    periodSeconds: 15
+  readinessProbe:
+    path: /actuator/health/readiness
+    initialDelaySeconds: 30
+    periodSeconds: 10
+
+# Individual Service Overrides (Optional)
+identityService:
+  enabled: true
+  replicaCount: 2
+
+gatewayBff:
+  enabled: true
+  serviceType: LoadBalancer

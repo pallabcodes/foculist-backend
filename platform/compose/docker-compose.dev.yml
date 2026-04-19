@@ -61,9 +61,11 @@ services:
     environment:
       - KEYCLOAK_ADMIN=admin
       - KEYCLOAK_ADMIN_PASSWORD=admin
+      - KC_HOSTNAME_STRICT_HTTPS=false
+      - KC_HTTP_ENABLED=true
     command: start-dev --import-realm
     ports:
-      - "9090:8080"
+      - "9080:8080"
     volumes:
       - ../../keycloak-init:/opt/keycloak/data/import
 
@@ -92,7 +94,7 @@ services:
     volumes:
       - ../otel/prometheus.yml:/etc/prometheus/prometheus.yml
     ports:
-      - "9090:9090"
+      - "9091:9090"
     depends_on:
       - otel-collector
 
@@ -109,3 +111,53 @@ services:
     depends_on:
       - prometheus
       - loki
+
+  redisinsight:
+    image: redislabs/redisinsight:latest
+    ports:
+      - "8001:8001"
+    depends_on:
+      - redis
+
+  ollama-mock:
+    image: alpine:3.18
+    command: >
+      sh -c "echo '{\"model\":\"foculist-ai\",\"created_at\":\"2026-04-06T12:00:00Z\",\"response\":\"[AI MOCK] Task enrichment complete: Added priority and milestone mappings.\",\"done\":true}' > /tmp/response.json && 
+             while true; do printf 'HTTP/1.1 200 OK\r\nContent-Type: application/json\r\n\r\n' | cat - /tmp/response.json | nc -l -p 11434; done"
+    ports:
+      - "11434:11434"
+
+  mailpit:
+    image: axllent/mailpit:latest
+    ports:
+      - "1025:1025"
+      - "8025:8025"
+
+  unleash-db:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: unleash
+      POSTGRES_USER: unleash
+      POSTGRES_PASSWORD: unleash
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U unleash"]
+      interval: 2s
+      timeout: 5s
+      retries: 10
+
+  unleash:
+    image: unleashorg/unleash-server:latest
+    ports:
+      - "4242:4242"
+    environment:
+      DATABASE_URL: postgres://unleash:unleash@unleash-db:5432/unleash
+      DATABASE_SSL: "false"
+      UNLEASH_URL: http://localhost:4242/api
+    depends_on:
+      unleash-db:
+        condition: service_healthy
+
+  registry:
+    image: registry:2
+    ports:
+      - "5000:5000"

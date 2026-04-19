@@ -43,6 +43,15 @@ spring:
             client-id: ${GITHUB_CLIENT_ID:placeholder}
             client-secret: ${GITHUB_CLIENT_SECRET:placeholder}
             scope: user:email, read:user
+  mail:
+    host: localhost
+    port: 1025
+    properties:
+      mail:
+        smtp:
+          auth: false
+          starttls:
+            enable: false
 
 springdoc:
   api-docs:
@@ -121,7 +130,8 @@ app:
     skip-actuator: true
 
 keycloak:
-  server-url: ${KEYCLOAK_SERVER_URL:http://keycloak:8080}
+  server-url: ${KEYCLOAK_SERVER_URL:http://localhost:9080}
+  issuer-uri: ${JWT_ISSUER_URI:http://localhost:9080/realms/foculist}
   realm: ${KEYCLOAK_REALM:foculist}
   client-id: ${KEYCLOAK_CLIENT_ID:foculist-local-client}
   client-secret: ${KEYCLOAK_CLIENT_SECRET:foculist-dev-secret-that-is-long}

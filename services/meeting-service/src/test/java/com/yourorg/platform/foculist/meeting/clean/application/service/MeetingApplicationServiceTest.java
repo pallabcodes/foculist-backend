@@ -8,6 +8,7 @@ import com.yourorg.platform.foculist.meeting.clean.domain.model.MeetingDomainExc
 import com.yourorg.platform.foculist.meeting.clean.domain.model.MeetingSummary;
 import com.yourorg.platform.foculist.meeting.clean.domain.model.SummaryStyle;
 import com.yourorg.platform.foculist.meeting.clean.domain.port.MeetingSummaryRepositoryPort;
+import com.yourorg.platform.foculist.meeting.clean.domain.port.PlanningClientPort;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;
@@ -24,10 +25,9 @@ class MeetingApplicationServiceTest {
 
     @Test
     void createsSummary() {
-        Instant now = Instant.parse("2026-02-04T10:00:00Z");
-        Clock clock = Clock.fixed(now, ZoneOffset.UTC);
         MeetingSummaryRepositoryPort summaryRepository = mock(MeetingSummaryRepositoryPort.class);
-        MeetingApplicationService service = new MeetingApplicationService(summaryRepository, clock);
+        PlanningClientPort planningClient = mock(PlanningClientPort.class);
+        MeetingApplicationService service = new MeetingApplicationService(summaryRepository, planningClient);
         when(summaryRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
 
         MeetingSummaryView created = service.createSummary(
@@ -43,7 +43,8 @@ class MeetingApplicationServiceTest {
     @Test
     void listsSummariesForTenant() {
         MeetingSummaryRepositoryPort summaryRepository = mock(MeetingSummaryRepositoryPort.class);
-        MeetingApplicationService service = new MeetingApplicationService(summaryRepository);
+        PlanningClientPort planningClient = mock(PlanningClientPort.class);
+        MeetingApplicationService service = new MeetingApplicationService(summaryRepository, planningClient);
         MeetingSummary summary = MeetingSummary.create(
                 "tenant-a",
                 "meeting-2",
@@ -61,7 +62,8 @@ class MeetingApplicationServiceTest {
     @Test
     void rejectsInvalidSummaryStyle() {
         MeetingSummaryRepositoryPort summaryRepository = mock(MeetingSummaryRepositoryPort.class);
-        MeetingApplicationService service = new MeetingApplicationService(summaryRepository);
+        PlanningClientPort planningClient = mock(PlanningClientPort.class);
+        MeetingApplicationService service = new MeetingApplicationService(summaryRepository, planningClient);
 
         assertThatThrownBy(() -> service.createSummary(
                 "tenant-a",
@@ -72,7 +74,8 @@ class MeetingApplicationServiceTest {
     @Test
     void extractsTasksFromTranscriptSignals() {
         MeetingSummaryRepositoryPort summaryRepository = mock(MeetingSummaryRepositoryPort.class);
-        MeetingApplicationService service = new MeetingApplicationService(summaryRepository);
+        PlanningClientPort planningClient = mock(PlanningClientPort.class);
+        MeetingApplicationService service = new MeetingApplicationService(summaryRepository, planningClient);
 
         List<ExtractedTaskView> tasks = service.extractTasks(
                 "tenant-a",
@@ -92,7 +95,8 @@ class MeetingApplicationServiceTest {
     @Test
     void returnsFallbackTaskWhenTranscriptHasNoSignals() {
         MeetingSummaryRepositoryPort summaryRepository = mock(MeetingSummaryRepositoryPort.class);
-        MeetingApplicationService service = new MeetingApplicationService(summaryRepository);
+        PlanningClientPort planningClient = mock(PlanningClientPort.class);
+        MeetingApplicationService service = new MeetingApplicationService(summaryRepository, planningClient);
 
         List<ExtractedTaskView> tasks = service.extractTasks(
                 "tenant-a",
@@ -101,5 +105,21 @@ class MeetingApplicationServiceTest {
 
         assertThat(tasks).hasSize(1);
         assertThat(tasks.get(0).title()).contains("Review meeting notes");
+    }
+
+    @Test
+    void promotesTaskToPlanning() {
+        MeetingSummaryRepositoryPort summaryRepository = mock(MeetingSummaryRepositoryPort.class);
+        PlanningClientPort planningClient = mock(PlanningClientPort.class);
+        MeetingApplicationService service = new MeetingApplicationService(summaryRepository, planningClient);
+
+        service.promoteTask("tenant-a", "meeting-1", "Fix bug", "HIGH");
+
+        org.mockito.Mockito.verify(planningClient).createTask(
+                org.mockito.ArgumentMatchers.eq("tenant-a"),
+                org.mockito.ArgumentMatchers.eq("Fix bug"),
+                org.mockito.ArgumentMatchers.contains("meeting-1"),
+                org.mockito.ArgumentMatchers.eq(com.yourorg.platform.foculist.meeting.clean.domain.model.TaskPriority.HIGH)
+        );
     }
 }

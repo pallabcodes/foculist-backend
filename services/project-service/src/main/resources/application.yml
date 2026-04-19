@@ -4,6 +4,16 @@ spring:
   threads:
     virtual:
       enabled: true
+  cloud:
+    aws:
+      region:
+        static: ${app.aws.region:us-east-1}
+      endpoint: ${app.aws.endpoint:http://localhost:4566}
+      credentials:
+        access-key: test
+        secret-key: test
+      sqs:
+        enabled: true
   datasource:
     url: ${SPRING_DATASOURCE_URL:${DB_URL:jdbc:postgresql://localhost:5432/foculist}}
     username: ${SPRING_DATASOURCE_USERNAME:${DB_USERNAME:foculist}}

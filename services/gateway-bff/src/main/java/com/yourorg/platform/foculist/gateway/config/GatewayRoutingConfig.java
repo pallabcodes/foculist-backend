@@ -93,7 +93,7 @@ public class GatewayRoutingConfig {
                         .path("/api/meetings/**")
                         .filters(filter -> filter
                                 .circuitBreaker(config -> config.setName("meetingService").setFallbackUri("forward:/fallback/meeting"))
-                                .rewritePath("/api/meetings(?<segment>/?.*)", "/v1/meetings${segment}"))
+                                .rewritePath("/api/meetings/(?<segment>.*)", "/v1/meetings/${segment}"))
                         .uri(downstream.getMeeting()))
                 .route("sync", route -> route
                         .path("/api/sync/**")

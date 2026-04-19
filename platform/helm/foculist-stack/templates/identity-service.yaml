@@ -1,0 +1,80 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "foculist.fullname" . }}-identity
+  labels:
+    {{- include "foculist.labels" . | nindent 4 }}
+    app: identity-service
+spec:
+  replicas: {{ .Values.identityService.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "foculist.selectorLabels" . | nindent 6 }}
+      app: identity-service
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "foculist.labels" . | nindent 8 }}
+        app: identity-service
+    spec:
+      containers:
+        - name: identity-service
+          image: "{{ .Values.global.image.repository | default "foculist/identity-service" }}:{{ .Values.global.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.global.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: 8081
+              protocol: TCP
+            - name: grpc
+              containerPort: 9090
+              protocol: TCP
+          env:
+            - name: SPRING_PROFILES_ACTIVE
+              value: "prod"
+            - name: AWS_REGION
+              value: {{ .Values.global.aws.region | quote }}
+            - name: AWS_ENDPOINT
+              value: {{ .Values.global.aws.endpoint | quote }}
+            - name: SPRING_RABBITMQ_HOST
+              value: {{ .Values.global.rabbitmq.host | quote }}
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              value: {{ .Values.global.otel.otlpEndpoint | quote }}
+          resources:
+            {{- toYaml .Values.serviceDefaults.resources | nindent 12 }}
+          livenessProbe:
+            httpGet:
+              path: {{ .Values.serviceDefaults.livenessProbe.path }}
+              port: http
+            initialDelaySeconds: {{ .Values.serviceDefaults.livenessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.serviceDefaults.livenessProbe.periodSeconds }}
+          readinessProbe:
+            httpGet:
+              path: {{ .Values.serviceDefaults.readinessProbe.path }}
+              port: http
+            initialDelaySeconds: {{ .Values.serviceDefaults.readinessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.serviceDefaults.readinessProbe.periodSeconds }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "foculist.fullname" . }}-identity
+  labels:
+    {{- include "foculist.labels" . | nindent 4 }}
+spec:
+  type: ClusterIP
+  ports:
+    - port: 8081
+      targetPort: 8081
+      protocol: TCP
+      name: http
+    - port: 9090
+      targetPort: 9090
+      protocol: TCP
+      name: grpc
+  selector:
+    {{- include "foculist.selectorLabels" . | nindent 4 }}
+    app: identity-service

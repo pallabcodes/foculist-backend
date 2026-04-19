@@ -56,6 +56,32 @@ public class MeetingController {
         );
     }
 
+    @PostMapping("/promote-task")
+    public ResponseEntity<Void> promoteTask(@Valid @RequestBody PromoteTaskRequest request) {
+        meetingApplicationService.promoteTask(
+                TenantContext.require(),
+                request.meetingId(),
+                request.title(),
+                request.priority()
+        );
+        return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/promote-worklog")
+    public ResponseEntity<Void> promoteWorklog(@Valid @RequestBody PromoteWorklogRequest request) {
+        meetingApplicationService.promoteWorklog(
+                TenantContext.require(),
+                request.meetingId(),
+                request.taskTitle(),
+                request.durationMinutes()
+        );
+        return ResponseEntity.noContent().build();
+    }
+
+    public record PromoteTaskRequest(@NotBlank String meetingId, @NotBlank String title, @NotBlank String priority) {}
+
+    public record PromoteWorklogRequest(@NotBlank String meetingId, @NotBlank String taskTitle, int durationMinutes) {}
+
     public record CreateSummaryRequest(@NotBlank String meetingId, @NotBlank String content, String style) {
     }
 

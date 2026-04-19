@@ -47,6 +47,7 @@ public class PlanningController {
         this.taskResponseMapperRegistry = taskResponseMapperRegistry;
     }
 
+    @PreAuthorize("isAuthenticated()")
     @GetMapping("/sprints")
     public List<SprintView> listSprints(
             @RequestParam(defaultValue = "0") int page,
@@ -62,6 +63,7 @@ public class PlanningController {
         return planningApplicationService.workflowStatuses();
     }
 
+    @PreAuthorize("isAuthenticated()")
     @PostMapping("/tasks")
     public ResponseEntity<TaskView> createTask(@Valid @RequestBody CreateTaskRequest request) {
         TaskView created = planningApplicationService.createTask(
@@ -77,6 +79,7 @@ public class PlanningController {
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
+    @PreAuthorize("isAuthenticated()")
     @GetMapping("/tasks")
     public ApiResponse<?> listTasks(
             @RequestParam(defaultValue = "0") int page,

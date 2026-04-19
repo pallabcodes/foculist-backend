@@ -1,0 +1,32 @@
+{
+  "consumer": { "name": "gateway-bff" },
+  "provider": { "name": "identity-service" },
+  "interactions": [
+    {
+      "description": "A request to onboard a new workspace",
+      "request": {
+        "method": "POST",
+        "path": "/v1/onboard",
+        "headers": { "Content-Type": "application/json" },
+        "body": {
+          "projectName": "Acme Corp",
+          "projectKey": "ACME",
+          "experience": "B2B",
+          "invites": []
+        }
+      },
+      "response": {
+        "status": 201,
+        "headers": { "Content-Type": "application/json" },
+        "body": {
+          "id": "f47ac10b-58cc-4372-a567-0e02b2c3d479",
+          "slug": "acme-corp",
+          "name": "Acme Corp"
+        }
+      }
+    }
+  ],
+  "metadata": {
+    "pactSpecification": { "version": "2.0.0" }
+  }
+}

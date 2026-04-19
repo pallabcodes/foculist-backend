@@ -16,6 +16,11 @@ spring:
               args:
                 name: identityService
                 fallbackUri: forward:/fallback/identity
+#            - name: RequestRateLimiter
+#              args:
+#                redis-rate-limiter.replenishRate: 5
+#                redis-rate-limiter.burstCapacity: 10
+#                key-resolver: "#{@ipKeyResolver}"
             - RewritePath=/api/identity/(?<segment>.*), /${segment}
         - id: project-service
           uri: ${app.gateway.downstream.project}
@@ -56,18 +61,45 @@ spring:
               args:
                 name: calendarService
                 fallbackUri: forward:/fallback/calendar
-            - RewritePath=/api/calendar/(?<segment>.*), /v1/calendar/${segment}
+            - RewritePath=/api/calendar/(?<segment>.*), /${segment}
+        - id: meeting-service
+          uri: ${app.gateway.downstream.meeting}
+          predicates:
+            - Path=/api/meetings/**
+          filters:
+            - name: CircuitBreaker
+              args:
+                name: meetingService
+                fallbackUri: forward:/fallback/meeting
+            - RewritePath=/api/meetings/(?<segment>.*), /${segment}
+        - id: resource-service
+          uri: ${app.gateway.downstream.resource}
+          predicates:
+            - Path=/api/resources/**
+          filters:
+            - name: CircuitBreaker
+              args:
+                name: resourceService
+                fallbackUri: forward:/fallback/resource
+            - RewritePath=/api/resources/(?<segment>.*), /${segment}
 
 grpc:
   client:
     identity-service:
-      address: "static://identity-service:9090"
+      address: "discovery:///identity-service"
+      enableKeepAlive: true
+      keepAliveDelay: 20s
       negotiationType: plaintext
+      defaultLoadBalancingPolicy: round_robin
+      # --- Internal mTLS (Draft) ---
+      # security:
+      #   trustCertCollectionUri: "file:///app/certs/ca.crt"
+      #   clientAuthRequirement: REQUIRE
   security:
     oauth2:
       resourceserver:
         jwt:
-          issuer-uri: ${JWT_ISSUER_URI:http://localhost:9090/realms/foculist}
+          issuer-uri: ${JWT_ISSUER_URI:http://localhost:9080/realms/foculist}
 
 management:
   endpoint:
@@ -97,7 +129,8 @@ logging:
     org.springframework.cloud.gateway: DEBUG
     org.springframework.security: DEBUG
   pattern:
-    level: "%5p [${spring.application.name},%X{traceId:-},%X{spanId:-},%X{tenantId:-}]"
+    level: "%5p
+      [${spring.application.name},%X{traceId:-},%X{spanId:-},%X{tenantId:-}]"
 
 app:
   cors:

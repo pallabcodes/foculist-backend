@@ -60,6 +60,8 @@ configure(microservices.map { project(it) }) {
         "testImplementation"("org.springframework.boot:spring-boot-starter-test")
 
         "implementation"(platform("software.amazon.awssdk:bom:2.25.35"))
+        "implementation"("io.awspring.cloud:spring-cloud-aws-starter-sqs:3.1.1")
+        "implementation"("io.awspring.cloud:spring-cloud-aws-starter-secrets-manager:3.1.1")
         "implementation"("software.amazon.awssdk:sqs")
         "implementation"("software.amazon.awssdk:sns")
         "implementation"("software.amazon.awssdk:dynamodb")
@@ -101,6 +103,7 @@ configure(mvcServices.map { project(it) }) {
 
         "implementation"("io.hypersistence:hypersistence-utils-hibernate-63:3.7.3")
 
+        "implementation"("io.getunleash:unleash-client-java:9.2.0")
         "implementation"("io.github.resilience4j:resilience4j-ratelimiter:2.2.0")
     }
 }
@@ -160,6 +163,7 @@ project(":platform:tenancy-core") {
 
     dependencies {
         "api"("org.springframework.boot:spring-boot-autoconfigure:3.2.5")
+        "api"("org.springframework.boot:spring-boot-starter-actuator:3.2.5")
         "compileOnly"("org.springframework.boot:spring-boot-starter-web:3.2.5")
         "compileOnly"("org.springframework.boot:spring-boot-starter-security:3.2.5")
         "compileOnly"("org.springframework.boot:spring-boot-starter-oauth2-resource-server:3.2.5")
@@ -170,6 +174,10 @@ project(":platform:tenancy-core") {
         "runtimeOnly"("io.jsonwebtoken:jjwt-impl:0.12.5")
         "runtimeOnly"("io.jsonwebtoken:jjwt-jackson:0.12.5")
         "implementation"("org.springframework.boot:spring-boot-starter-json:3.2.5")
+        "api"("io.getunleash:unleash-client-java:9.2.0")
+        "api"("io.github.resilience4j:resilience4j-ratelimiter:2.2.0")
+        "api"("io.github.resilience4j:resilience4j-retry:2.2.0")
+        "api"("jakarta.annotation:jakarta.annotation-api:2.1.1")
         "compileOnly"("org.projectlombok:lombok:1.18.32")
         "annotationProcessor"("org.projectlombok:lombok:1.18.32")
         "testImplementation"("org.springframework.boot:spring-boot-starter-test:3.2.5")

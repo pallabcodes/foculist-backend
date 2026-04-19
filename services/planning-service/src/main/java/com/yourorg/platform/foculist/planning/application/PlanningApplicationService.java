@@ -1,5 +1,7 @@
 package com.yourorg.platform.foculist.planning.application;
 
+import com.yourorg.platform.foculist.tenancy.feature.FeatureToggleService;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.yourorg.platform.foculist.planning.domain.event.TaskCreatedEvent;
@@ -58,6 +60,7 @@ public class PlanningApplicationService {
     private final BoardRepositoryPort boardRepository;
     private final BoardColumnRepositoryPort boardColumnRepository;
     private final EpicRepositoryPort epicRepository;
+    private final FeatureToggleService featureToggleService;
     private final ObjectMapper objectMapper;
     private final Clock clock;
 
@@ -93,7 +96,24 @@ public class PlanningApplicationService {
                 createTaskCreatedPayload(saved),
                 Instant.now(clock)
         ));
+
+        // --- Phase 17: AI Enrichment Gating ---
+        if (featureToggleService.isEnabled("ai-enrichment")) {
+            triggerAiEnrichment(saved);
+        }
+
         return toView(saved);
+    }
+
+    private void triggerAiEnrichment(Task task) {
+        outboxEventRepository.save(OutboxEvent.newEvent(
+                task.tenantId(),
+                "Task",
+                task.id(),
+                "TaskAiEnrichmentRequested",
+                createTaskCreatedPayload(task),
+                Instant.now(clock)
+        ));
     }
 
     @Transactional(readOnly = true)
@@ -407,7 +427,7 @@ public class PlanningApplicationService {
 
     private Cursor parseCursor(String after) {
         if (after == null || after.isBlank()) {
-            return new Cursor(Instant.MAX, UUID.randomUUID());
+            return new Cursor(null, null);
         }
         try {
             String decoded = new String(Base64.getDecoder().decode(after));
@@ -417,7 +437,7 @@ public class PlanningApplicationService {
             }
             return new Cursor(Instant.parse(parts[0]), UUID.fromString(parts[1]));
         } catch (Exception e) {
-            return new Cursor(Instant.MAX, UUID.randomUUID());
+            return new Cursor(null, null);
         }
     }
 

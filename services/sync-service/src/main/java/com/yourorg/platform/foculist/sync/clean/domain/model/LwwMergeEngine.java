@@ -38,7 +38,7 @@ public class LwwMergeEngine {
     }
 
     /**
-     * Merge two JSON payloads field by field using LWW semantics.
+     * Merge two JSON payloads field by field recursively using LWW semantics.
      *
      * @param localJson  the local (current) payload
      * @param remoteJson the remote (incoming) payload
@@ -47,22 +47,42 @@ public class LwwMergeEngine {
     public String merge(String localJson, String remoteJson) {
         Map<String, Object> local = parsePayload(localJson);
         Map<String, Object> remote = parsePayload(remoteJson);
-        Map<String, Object> merged = new LinkedHashMap<>(local);
+        Map<String, Object> merged = mergeMaps(local, remote);
+        return toJson(merged);
+    }
+
+    private Map<String, Object> mergeMaps(Map<String, Object> local, Map<String, Object> remote) {
+        Map<String, Object> result = new LinkedHashMap<>(local);
 
         for (Map.Entry<String, Object> entry : remote.entrySet()) {
             String field = entry.getKey();
-            LwwRegister<Object> remoteRegister = toRegister(field, entry.getValue());
+            Object remoteVal = entry.getValue();
 
-            if (merged.containsKey(field)) {
-                LwwRegister<Object> localRegister = toRegister(field, merged.get(field));
-                LwwRegister<Object> winner = localRegister.merge(remoteRegister);
-                merged.put(field, fromRegister(winner));
+            if (result.containsKey(field)) {
+                Object localVal = result.get(field);
+
+                if (isRegister(localVal) && isRegister(remoteVal)) {
+                    LwwRegister<Object> localReg = toRegister(field, localVal);
+                    LwwRegister<Object> remoteReg = toRegister(field, remoteVal);
+                    result.put(field, fromRegister(localReg.merge(remoteReg)));
+                } else if (localVal instanceof Map && remoteVal instanceof Map) {
+                    // Recursive merge for nested structures
+                    result.put(field, mergeMaps((Map<String, Object>) localVal, (Map<String, Object>) remoteVal));
+                } else {
+                    // Fallback to simple LWW if structures don't match or aren't registers
+                    LwwRegister<Object> localReg = toRegister(field, localVal);
+                    LwwRegister<Object> remoteReg = toRegister(field, remoteVal);
+                    result.put(field, fromRegister(localReg.merge(remoteReg)));
+                }
             } else {
-                merged.put(field, fromRegister(remoteRegister));
+                result.put(field, isRegister(remoteVal) ? remoteVal : fromRegister(toRegister(field, remoteVal)));
             }
         }
+        return result;
+    }
 
-        return toJson(merged);
+    private boolean isRegister(Object val) {
+        return val instanceof Map && ((Map<?, ?>) val).containsKey("timestamp");
     }
 
     @SuppressWarnings("unchecked")
